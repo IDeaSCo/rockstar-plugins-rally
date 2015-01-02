@@ -1,0 +1,22 @@
+language: java
+
+jdk:
+- oraclejdk7
+
+branches:
+only:
+- master
+
+install: ant
+
+
+
+deploy:
+  provider: releases
+  api-key: "6148c234fd62f626501004ae5867566bb25211df"
+  file: "dist/lib/rally_rock_star_plugin.jar"
+  skip_cleanup: true
+  on:
+    tags: true
+    all_branches: true
+    repo: IDeaSCo/rockstar-plugins-rally

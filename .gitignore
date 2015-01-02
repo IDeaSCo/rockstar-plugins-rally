@@ -1,0 +1,9 @@
+/target
+/.settings
+/.classpath
+/.project
+RallyRest.iml
+std*.log
+.idea
+build
+dist
