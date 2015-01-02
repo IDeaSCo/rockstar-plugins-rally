@@ -48,3 +48,4 @@ Process Violator|-5|For leaving the story/defect in prior iteration in state oth
 Process Violator|-5|For not updating either of tasks
 
 ###Download
+https://github.com/IDeaSCo/rockstar-plugins-rally/releases
