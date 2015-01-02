@@ -867,7 +867,7 @@ public class RallyRockStarIntegration {
 		int responseCode = 200;
 		try {
 		
-        System.out.println("\nSending 'POST' request to URL : " + RallyConfiguration.postUrl);
+        System.out.println("\nSending 'POST' request to URL : " + RallyConfiguration.postUrl+"/trophy/save");
         URL obj = new URL(url);
         HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 
