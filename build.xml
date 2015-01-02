@@ -62,5 +62,7 @@
         </java>
     </target>
 
-
+    <target name="test" description="test run" depends="init" >
+        <!-- no tests -->
+    </target>
 </project>
