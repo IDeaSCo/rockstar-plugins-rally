@@ -1,5 +1,9 @@
 package com.ideas.rally;
 
+import com.rallydev.rest.RallyRestApi;
+import sun.misc.BASE64Decoder;
+import sun.misc.BASE64Encoder;
+
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -10,22 +14,17 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import sun.misc.BASE64Decoder;
-import sun.misc.BASE64Encoder;
-
-import com.rallydev.rest.RallyRestApi;
-
 public class RallyConfiguration {
-	static String jdbcURL="";
+	private static String jdbcURL="";
 	static String postUrl = "";
 	static String alternatePostUrl = "";
-	static String RALLY_URL = "";
-	static String mysqlUser="";
-	static String mysqlPassword="";
+	private static String RALLY_URL = "";
+	private static String mysqlUser="";
+	private static String mysqlPassword="";
 	static String postEmail="";
 	private static RallyRestApi restApi;
-	public static String RALLY_USER_NAME = "";
-	public static String RALLY_USER_PASS = "";
+	private static String RALLY_USER_NAME = "";
+	private static String RALLY_USER_PASS = "";
 	public static String RALLY_PROJECT = "";
 
 	private static final Properties configurationProperties = new Properties();
@@ -58,10 +57,10 @@ public class RallyConfiguration {
 	public static RallyRestApi getRallyRestApi() throws URISyntaxException{
         // Rally parameters
 		if(restApi == null) {
-	        String rallyURL = new String(RALLY_URL);        
-	        String userName = new String(RALLY_USER_NAME);
-	        String userPassword = new String(RALLY_USER_PASS);
-	        String applicationName = new String("STAR Integration");
+	        String rallyURL = RALLY_URL;
+	        String userName = RALLY_USER_NAME;
+	        String userPassword = RALLY_USER_PASS;
+	        String applicationName = "STAR Integration";
 	
 	        // Create and configure a new instance of RallyRestApi
 	        restApi = new RallyRestApi(
@@ -86,13 +85,12 @@ public class RallyConfiguration {
 	}
 	
 	
-	public static String encodeStringToBase64(String inputValue) throws UnsupportedEncodingException {
+	private static String encodeStringToBase64(String inputValue) throws UnsupportedEncodingException {
 		BASE64Encoder encoder = new BASE64Encoder();
-		String encodedString = encoder.encode(inputValue.getBytes("utf-8") );
-		return encodedString;
+        return encoder.encode(inputValue.getBytes("utf-8") );
 	}
 	
-	public static String decodeBase64String(String base64Value) throws IOException {
+	private static String decodeBase64String(String base64Value) throws IOException {
 		BASE64Decoder decoder = new BASE64Decoder();
 		byte[] decodedByteArray = decoder.decodeBuffer(base64Value);
 

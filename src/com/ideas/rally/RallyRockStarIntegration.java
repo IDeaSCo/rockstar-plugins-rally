@@ -1,5 +1,17 @@
 package com.ideas.rally;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
+import com.rallydev.rest.RallyRestApi;
+import com.rallydev.rest.request.GetRequest;
+import com.rallydev.rest.request.QueryRequest;
+import com.rallydev.rest.response.GetResponse;
+import com.rallydev.rest.response.QueryResponse;
+import com.rallydev.rest.util.Fetch;
+import com.rallydev.rest.util.QueryFilter;
+
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
@@ -15,24 +27,10 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonNull;
-import com.google.gson.JsonObject;
-import com.rallydev.rest.RallyRestApi;
-import com.rallydev.rest.request.GetRequest;
-import com.rallydev.rest.request.QueryRequest;
-import com.rallydev.rest.response.GetResponse;
-import com.rallydev.rest.response.QueryResponse;
-import com.rallydev.rest.util.Fetch;
-import com.rallydev.rest.util.QueryFilter;
-
 public class RallyRockStarIntegration {
-	
-	static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");	
-	static List<String> holidays = new ArrayList<String>();
+	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+    private static final List<String> holidays = new ArrayList<String>();
 	static {
-		
 		try {
 			loadHolidays();
 		} catch (Exception e) {
@@ -41,19 +39,19 @@ public class RallyRockStarIntegration {
 		}
 	}
 
-	static void loadHolidays() throws IOException {
+    private static void loadHolidays() throws IOException {
 		BufferedReader reader = new BufferedReader(new FileReader("holidays.list"));
-		String line=null;
+		String line;
 		while((line = reader.readLine())!= null) {
 			holidays.add(line);
 		}
 		reader.close();
 	}
-	static List<String> workingDaysSinceStartOfIteration = new ArrayList<String>();	
-	
-	static String getIteration(String date) throws URISyntaxException, IOException, ParseException {
+    private static final List<String> workingDaysSinceStartOfIteration = new ArrayList<String>();
+
+    private static String getIteration(String date) throws URISyntaxException, IOException, ParseException {
 		
-		String iterationName="";
+		String iterationName;
 		RallyRestApi restApi = RallyConfiguration.getRallyRestApi();
 
         QueryRequest workSpaceRequest = new QueryRequest("Iteration");
@@ -62,7 +60,7 @@ public class RallyRockStarIntegration {
         workSpaceRequest.setQueryFilter(queryFilter);
         workSpaceRequest.setPageSize(200);
         int pageCount=0;
-        QueryResponse workSpaceResponse=null;
+        QueryResponse workSpaceResponse;
         do{
             workSpaceRequest.setLimit(1);
             workSpaceRequest.setStart((pageCount*200)+pageCount);
@@ -71,10 +69,10 @@ public class RallyRockStarIntegration {
             JsonArray array = workSpaceResponse.getResults();
             for (JsonElement jsonElement : array) {
             	
-            	JsonObject jobject = jsonElement.getAsJsonObject();
-            	iterationName= jobject.get("Name").getAsString();
-            	String startDate = jobject.get("StartDate").getAsString().substring(0,10);
-            	String endDate = jobject.get("EndDate").getAsString().substring(0,10);
+            	JsonObject json = jsonElement.getAsJsonObject();
+            	iterationName= json.get("Name").getAsString();
+            	String startDate = json.get("StartDate").getAsString().substring(0,10);
+            	String endDate = json.get("EndDate").getAsString().substring(0,10);
             	endDate = subtractOneDay(endDate);
             	System.out.println("iterationName:"+iterationName+" startDate:"+startDate+" endDate:"+endDate);
             	if(startDate.compareTo(date)<=0 && endDate.compareTo(date)>=0) {
@@ -97,7 +95,7 @@ public class RallyRockStarIntegration {
 		return endDate;
 	}
 
-	static void populateWorkingDaysSinceStartOfIteration(String startDate, String date) throws ParseException {
+    private static void populateWorkingDaysSinceStartOfIteration(String startDate, String date) throws ParseException {
 		Calendar startCalDate = Calendar.getInstance();
 		startCalDate.setTime(sdf.parse(startDate));
 		Calendar endCalDate = Calendar.getInstance();
@@ -111,8 +109,8 @@ public class RallyRockStarIntegration {
 		
 	}
 
-	static String getPreviousIteration(String date) throws URISyntaxException, IOException, ParseException {
-		String iterationName="";
+    private static String getPreviousIteration(String date) throws URISyntaxException, IOException, ParseException {
+		String iterationName;
 		RallyRestApi restApi = RallyConfiguration.getRallyRestApi();
 
         QueryRequest workSpaceRequest = new QueryRequest("Iteration");
@@ -121,7 +119,7 @@ public class RallyRockStarIntegration {
         workSpaceRequest.setQueryFilter(queryFilter);
         workSpaceRequest.setPageSize(200);
         int pageCount=0;
-        QueryResponse workSpaceResponse=null;
+        QueryResponse workSpaceResponse;
         do{
             workSpaceRequest.setLimit(1);
             workSpaceRequest.setStart((pageCount*200)+pageCount);
@@ -130,10 +128,10 @@ public class RallyRockStarIntegration {
             JsonArray array = workSpaceResponse.getResults();
             for (JsonElement jsonElement : array) {
             	
-            	JsonObject jobject = jsonElement.getAsJsonObject();
-            	iterationName= jobject.get("Name").getAsString();
-            	String startDate = jobject.get("StartDate").getAsString().substring(0,10);
-            	String endDate = jobject.get("EndDate").getAsString().substring(0,10);
+            	JsonObject json = jsonElement.getAsJsonObject();
+            	iterationName= json.get("Name").getAsString();
+            	String startDate = json.get("StartDate").getAsString().substring(0,10);
+            	String endDate = json.get("EndDate").getAsString().substring(0,10);
             	System.out.println("iterationName:"+iterationName+" startDate:"+startDate+" endDate:"+endDate);
             	
             	
@@ -153,7 +151,7 @@ public class RallyRockStarIntegration {
 		
 	}
 
-	static void getTasks(String iteration) throws URISyntaxException, IOException, ClassNotFoundException, SQLException {
+    private static void getTasks(String iteration) throws URISyntaxException, IOException, ClassNotFoundException, SQLException {
 		System.out.println("iteration:"+iteration);
 		RallyRestApi restApi = RallyConfiguration.getRallyRestApi();
 
@@ -163,7 +161,7 @@ public class RallyRockStarIntegration {
         workSpaceRequest.setQueryFilter(queryFilter);
         workSpaceRequest.setPageSize(200);
         int pageCount=0;
-        QueryResponse workSpaceResponse=null;
+        QueryResponse workSpaceResponse;
         do{
             workSpaceRequest.setLimit(1);
             workSpaceRequest.setStart((pageCount*200)+pageCount);
@@ -172,29 +170,29 @@ public class RallyRockStarIntegration {
             System.out.println("Total Result:"+workSpaceResponse.getTotalResultCount());
             JsonArray array = workSpaceResponse.getResults();
             for (JsonElement jsonElement : array) {
-            	JsonObject jobject = jsonElement.getAsJsonObject();
-            	String emailAddress = getUserEmailAddress(getReferenceName(jobject, "Owner"));
+            	JsonObject json = jsonElement.getAsJsonObject();
+            	String emailAddress = getUserEmailAddress(getReferenceName(json, "Owner"));
             	
-            	System.out.println(jobject.get("FormattedID")+":"+jobject.get("Actuals")+":"+jobject.get("ToDo")+":"+jobject.get("State")+":"+emailAddress);
+            	System.out.println(json.get("FormattedID")+":"+json.get("Actuals")+":"+json.get("ToDo")+":"+json.get("State")+":"+emailAddress);
             	
-        		float actual = getFloaValue(jobject,"Actuals");
-        		float todo = getFloaValue(jobject,"ToDo");
+        		float actual = getFloatValue(json, "Actuals");
+        		float todo = getFloatValue(json, "ToDo");
         		if(emailAddress!=null) {
-        			insertIntoTaskHistory(iteration,jobject.get("FormattedID").getAsString(),emailAddress,actual,todo,jobject.get("State").getAsString());
+        			insertIntoTaskHistory(iteration,json.get("FormattedID").getAsString(),emailAddress,actual,todo,json.get("State").getAsString());
         		}
     		}
 
         }while(workSpaceResponse.getTotalResultCount()>pageCount*200);		
 		
 	}
-	private static float getFloaValue(JsonObject jobject,String value) {
-		float returnValue = 0.0f;
-		if(!(jobject!=null && jobject.get(value) instanceof JsonNull && jobject.get(value)!= null)) {
-			returnValue = jobject.get(value).getAsFloat();
-		}
-		return returnValue;
+	private static float getFloatValue(JsonObject json, String value) {
+        if (json==null || json.get(value) instanceof JsonNull || json.get(value)== null) {
+            return 0.0f;
+        }
+        return json.get(value).getAsFloat();
 	}
-	static void getStories(String iteration,String storyDefect) throws URISyntaxException, IOException, ClassNotFoundException, SQLException {
+
+    private static void getStories(String iteration,String storyDefect) throws URISyntaxException, IOException, ClassNotFoundException, SQLException {
 		getStoryDefect(storyDefect, "Iteration.Name",iteration, iteration );
 		updateStoryIteration(iteration);
 	}
@@ -211,7 +209,7 @@ public class RallyRockStarIntegration {
         workSpaceRequest.setQueryFilter(queryFilter);
         workSpaceRequest.setPageSize(200);
         int pageCount=0;
-        QueryResponse workSpaceResponse=null;
+        QueryResponse workSpaceResponse;
         do{
             workSpaceRequest.setLimit(1);
             workSpaceRequest.setStart((pageCount*200)+pageCount);
@@ -222,16 +220,16 @@ public class RallyRockStarIntegration {
             System.out.println("================");
             for (JsonElement jsonElement : array) {
             	
-            	JsonObject jobject = jsonElement.getAsJsonObject();
-            	String emailAddress = getUserEmailAddress(getReferenceName(jobject, "Owner"));            	
+            	JsonObject json = jsonElement.getAsJsonObject();
+            	String emailAddress = getUserEmailAddress(getReferenceName(json, "Owner"));            	
             	
-            	float planEstimate = getFloatValue(jobject,"PlanEstimate");
+            	float planEstimate = getFloatValue(json, "PlanEstimate");
             	if(emailAddress != null) {            		
-            		insertIntoStoryHistory(iteration,jobject.get("FormattedID").getAsString(),emailAddress,planEstimate,jobject.get("ScheduleState").getAsString());
-            		deleteStoryTaskOwners(jobject.get("FormattedID").getAsString());
-            		insertStoryTaskOwners(jobject.get("FormattedID").getAsString(),jobject.getAsJsonObject("Tasks").get("_ref").getAsString());
+            		insertIntoStoryHistory(iteration,json.get("FormattedID").getAsString(),emailAddress,planEstimate,json.get("ScheduleState").getAsString());
+            		deleteStoryTaskOwners(json.get("FormattedID").getAsString());
+            		insertStoryTaskOwners(json.get("FormattedID").getAsString(),json.getAsJsonObject("Tasks").get("_ref").getAsString());
             	}
-            	System.out.println(emailAddress+":"+jobject.getAsJsonObject("Tasks").get("_ref").getAsString());
+            	System.out.println(emailAddress+":"+json.getAsJsonObject("Tasks").get("_ref").getAsString());
             	
     		}
             System.out.println("================");
@@ -240,7 +238,7 @@ public class RallyRockStarIntegration {
 		
 	}
 	
-	static void getStoryIteration(String storyDefect, String storyNumber, String expectedIteration) throws URISyntaxException, IOException, ClassNotFoundException, SQLException {
+	private static void getStoryIteration(String storyDefect, String storyNumber, String expectedIteration) throws URISyntaxException, IOException, ClassNotFoundException, SQLException {
 		
 		RallyRestApi restApi = RallyConfiguration.getRallyRestApi();
 
@@ -250,7 +248,7 @@ public class RallyRockStarIntegration {
         workSpaceRequest.setQueryFilter(queryFilter);
         workSpaceRequest.setPageSize(200);
         int pageCount=0;
-        QueryResponse workSpaceResponse=null;
+        QueryResponse workSpaceResponse;
         do{
             workSpaceRequest.setLimit(1);
             workSpaceRequest.setStart((pageCount*200)+pageCount);
@@ -261,11 +259,11 @@ public class RallyRockStarIntegration {
             System.out.println("================");
             for (JsonElement jsonElement : array) {
             	
-            	JsonObject jobject = jsonElement.getAsJsonObject();
-            	System.out.println("storyNumber:'"+storyNumber+getReferenceName(jobject, "Iteration")+"'");
-            	if(getReferenceName(jobject, "Iteration") == null || !getReferenceName(jobject, "Iteration").equals(expectedIteration)) {
+            	JsonObject json = jsonElement.getAsJsonObject();
+            	System.out.println("storyNumber:'"+storyNumber+getReferenceName(json, "Iteration")+"'");
+            	if(getReferenceName(json, "Iteration") == null || !getReferenceName(json, "Iteration").equals(expectedIteration)) {
             		System.out.println("updating iteration name..");
-            		updateStoryIterationNumber(storyNumber,getReferenceName(jobject, "Iteration"));
+            		updateStoryIterationNumber(storyNumber,getReferenceName(json, "Iteration"));
             	}
     		}
             System.out.println("================");
@@ -304,8 +302,8 @@ public class RallyRockStarIntegration {
 		RallyRestApi restApi = RallyConfiguration.getRallyRestApi();
 		GetRequest request = new GetRequest(taskURL);
 		GetResponse response = restApi.get(request);
-		JsonObject jobject = response.getObject();
-		JsonArray jsonArray = jobject.getAsJsonArray("Results");
+		JsonObject json = response.getObject();
+		JsonArray jsonArray = json.getAsJsonArray("Results");
 		for(int i=0;i<jsonArray.size();i++) {
 			JsonElement element = jsonArray.get(i);
 			JsonObject childObject = element.getAsJsonObject();
@@ -318,7 +316,7 @@ public class RallyRockStarIntegration {
 		}
 
 	}
-	static void insertIntoStoryHistory(String iteration,String storyNumber, String emailAddress, float planEstimate, String state) throws ClassNotFoundException, SQLException {
+	private static void insertIntoStoryHistory(String iteration, String storyNumber, String emailAddress, float planEstimate, String state) throws ClassNotFoundException, SQLException {
         Connection con = RallyConfiguration.getConnection();
         Statement stmt = con.createStatement();
         StringBuilder buffer = new StringBuilder();
@@ -333,10 +331,6 @@ public class RallyRockStarIntegration {
         buffer.append(" storyOwner=VALUES(storyOwner), ");
         buffer.append(" planEstimate=VALUES(planEstimate), ");
         buffer.append(" state=VALUES(state) ");
-        
-        
-        
-        ;
         stmt.execute(buffer.toString());
         stmt.close();
         con.close();		
@@ -349,7 +343,6 @@ public class RallyRockStarIntegration {
         buffer.append(" values ('"+storyNumber+"','"+emailAddress+"') ");
         buffer.append(" on duplicate key update ");
         buffer.append(" storyTaskOwner=VALUES(storyTaskOwner) ");
-        ;
         stmt.execute(buffer.toString());
         stmt.close();
         con.close();		
@@ -367,7 +360,7 @@ public class RallyRockStarIntegration {
 	        workSpaceRequest.setQueryFilter(queryFilter);
 	        workSpaceRequest.setPageSize(200);
 	        int pageCount=0;
-	        QueryResponse workSpaceResponse=null;
+	        QueryResponse workSpaceResponse;
 	        do{
 	            workSpaceRequest.setLimit(1);
 	            workSpaceRequest.setStart((pageCount*200)+pageCount);
@@ -376,8 +369,8 @@ public class RallyRockStarIntegration {
 	            System.out.println("Total Result:"+workSpaceResponse.getTotalResultCount());
 	            JsonArray array = workSpaceResponse.getResults();
 	            for (JsonElement jsonElement : array) {
-	            	JsonObject jobject = jsonElement.getAsJsonObject();
-	            	email = jobject.get("EmailAddress").getAsString();
+	            	JsonObject json = jsonElement.getAsJsonObject();
+	            	email = json.get("EmailAddress").getAsString();
 	            	updateEmail(owner,email);
 	    		}
 	
@@ -405,22 +398,12 @@ public class RallyRockStarIntegration {
         con.close();
 		return email;
 	}
-	private static String getReferenceName(JsonObject jobject, String name) {
-		JsonObject owner = null; 
-		if( jobject.get(name) instanceof JsonNull){			
+	private static String getReferenceName(JsonObject json, String name) {
+		if( json.get(name) instanceof JsonNull)
 			return null;
-		}else{
-			owner = jobject.get(name).getAsJsonObject();
-			return owner.get("_refObjectName").getAsString();
-		}
-	}
-	private static float getFloatValue(JsonObject jobject,String value) {
-		float returnValue = 0.0f;
-		if(!(jobject!=null && jobject.get(value) instanceof JsonNull && jobject.get(value)!= null)) {
-			returnValue = jobject.get(value).getAsFloat();
-		}
-		return returnValue;
-	}
+        JsonObject owner = json.get(name).getAsJsonObject();
+        return owner.get("_refObjectName").getAsString();
+    }
 	private static void insertIntoTaskHistory(String iteration, String taskNumber,String taskOwner, float actual, float todo, String state) throws ClassNotFoundException, SQLException {
         Connection con = RallyConfiguration.getConnection();
         Statement stmt = con.createStatement();
@@ -432,14 +415,12 @@ public class RallyRockStarIntegration {
         buffer.append(" actuals=VALUES(actuals), ");
         buffer.append(" toDo=VALUES(toDo), ");
         buffer.append(" state=VALUES(state) ");
-        
-        ;
         stmt.execute(buffer.toString());
         stmt.close();
         con.close();
 	}
 
-	public static void createSchema() throws ClassNotFoundException, SQLException {
+	private static void createSchema() throws ClassNotFoundException, SQLException {
         Connection con = RallyConfiguration.getConnection();
         Statement stmt = con.createStatement();
         StringBuilder query = new StringBuilder();
@@ -530,14 +511,14 @@ public class RallyRockStarIntegration {
 			updateStarForCompletingStoryInIteration(iteration);
 			updateStarForNotTaskingStory(iteration);
 			
-			upateStarForLeavingStoryInPriorIterationsWhichIsNotAccepted(previousIteration);
+			updateStarForLeavingStoryInPriorIterationsWhichIsNotAccepted(previousIteration);
 			updateStarForNotUpdatingRally(iteration);
 			updateStarForUpdatingRally(iteration);
 			
 		}
 	}
 	
-	static void updateStatusOfUnacceptedStoriesInPreviousIteration(String previousIteration) throws ClassNotFoundException, SQLException, URISyntaxException, IOException {
+	private static void updateStatusOfUnacceptedStoriesInPreviousIteration(String previousIteration) throws ClassNotFoundException, SQLException, URISyntaxException, IOException {
         Connection con = RallyConfiguration.getConnection();
         Statement stmt = con.createStatement();
 		StringBuilder buffer = new StringBuilder();
@@ -562,7 +543,7 @@ public class RallyRockStarIntegration {
 		
 	}
 
-	static void optimizeTables() throws ClassNotFoundException, SQLException {
+	private static void optimizeTables() throws ClassNotFoundException, SQLException {
         Connection con = RallyConfiguration.getConnection();
         Statement stmt = con.createStatement();
         stmt.execute("optimize table storyhistory");
@@ -588,7 +569,7 @@ public class RallyRockStarIntegration {
         stmt.close();
         con.close();
 	}
-	static void cleanUpStoriesIfRecycled(String storyDefectNumber) throws IOException, URISyntaxException, ClassNotFoundException, SQLException {
+	private static void cleanUpStoriesIfRecycled(String storyDefectNumber) throws IOException, URISyntaxException, ClassNotFoundException, SQLException {
 		RallyRestApi restApi = RallyConfiguration.getRallyRestApi();
 
 		String storyDefect = "HierarchicalRequirement";
@@ -602,7 +583,7 @@ public class RallyRockStarIntegration {
         workSpaceRequest.setQueryFilter(queryFilter);
         workSpaceRequest.setPageSize(200);
         int pageCount=0;
-        QueryResponse workSpaceResponse=null;
+        QueryResponse workSpaceResponse;
         do{
             workSpaceRequest.setLimit(1);
             workSpaceRequest.setStart((pageCount*200)+pageCount);
@@ -615,12 +596,12 @@ public class RallyRockStarIntegration {
             JsonArray array = workSpaceResponse.getResults();
             for (JsonElement jsonElement : array) {
             	
-            	JsonObject jobject = jsonElement.getAsJsonObject();
-            	if(jobject.get("Recycled").getAsBoolean() == true) {
+            	JsonObject json = jsonElement.getAsJsonObject();
+            	if(json.get("Recycled").getAsBoolean()) {
             		deleteStoryNumber(storyDefectNumber);
             	}
-            	if(jobject.get("DirectChildrenCount")!= null) {
-	            	if(jobject.get("DirectChildrenCount").getAsInt() > 0) {
+            	if(json.get("DirectChildrenCount")!= null) {
+	            	if(json.get("DirectChildrenCount").getAsInt() > 0) {
 	            		deleteStoryNumber(storyDefectNumber);
 	            	}	
             	}
@@ -642,7 +623,7 @@ public class RallyRockStarIntegration {
         con.close();
 		
 	}
-	static void cleanUpTaskIfRecycled(String taskNumber)
+	private static void cleanUpTaskIfRecycled(String taskNumber)
 			throws URISyntaxException, IOException, ClassNotFoundException,
 			SQLException {
 		RallyRestApi restApi = RallyConfiguration.getRallyRestApi();
@@ -653,7 +634,7 @@ public class RallyRockStarIntegration {
         workSpaceRequest.setQueryFilter(queryFilter);
         workSpaceRequest.setPageSize(200);
         int pageCount=0;
-        QueryResponse workSpaceResponse=null;
+        QueryResponse workSpaceResponse;
         do{
             workSpaceRequest.setLimit(1);
             workSpaceRequest.setStart((pageCount*200)+pageCount);
@@ -665,13 +646,10 @@ public class RallyRockStarIntegration {
             }
             JsonArray array = workSpaceResponse.getResults();
             for (JsonElement jsonElement : array) {
-            	JsonObject jobject = jsonElement.getAsJsonObject();            	
-            	
-            	if(jobject.get("Recycled").getAsBoolean() == true) {
+            	JsonObject json = jsonElement.getAsJsonObject();            	
+            	if(json.get("Recycled").getAsBoolean()) {
                     deleteTaskNumber(taskNumber);
             	}
-            	
-        		
     		}
 
         }while(workSpaceResponse.getTotalResultCount()>pageCount*200);
@@ -691,7 +669,7 @@ public class RallyRockStarIntegration {
 		stmt.close();
 		con.close();
 	}
-	private static void upateStarForLeavingStoryInPriorIterationsWhichIsNotAccepted(String iteration) throws ClassNotFoundException, SQLException, IOException {
+	private static void updateStarForLeavingStoryInPriorIterationsWhichIsNotAccepted(String iteration) throws ClassNotFoundException, SQLException, IOException {
         Connection con = RallyConfiguration.getConnection();
         Statement stmt = con.createStatement();
 		StringBuilder buffer = new StringBuilder();
@@ -811,7 +789,7 @@ public class RallyRockStarIntegration {
 		stmt.close();
 		con.close();
 	}
-	static void updateStarForGettingStoryAcceptedInIteration(String iteration,String date) throws ClassNotFoundException, SQLException, IOException {
+	private static void updateStarForGettingStoryAcceptedInIteration(String iteration, String date) throws ClassNotFoundException, SQLException, IOException {
         Connection con = RallyConfiguration.getConnection();
         Statement stmt = con.createStatement();
 		StringBuilder buffer = new StringBuilder();
@@ -841,7 +819,7 @@ public class RallyRockStarIntegration {
 		con.close();
 	}
 
-	static int getBonusStarsForAcceptingTheStory(int stars, String date, int spillover) {		
+	private static int getBonusStarsForAcceptingTheStory(int stars, String date, int spillover) {
 		int noOfDaysPastInIteration = workingDaysSinceStartOfIteration.indexOf(date);
 			if(spillover == 1)
 				return stars;
@@ -863,8 +841,8 @@ public class RallyRockStarIntegration {
 		return (rs.getInt(3)-1)*10;
 	}
 
-	private static int post (String urlParameters, String url) throws IOException {
-		int responseCode = 200;
+	private static int post (String urlParameters, String url) {
+		int responseCode;
 		try {
 		
         System.out.println("\nSending 'POST' request to URL : " + RallyConfiguration.postUrl+"/trophy/save");
@@ -888,7 +866,7 @@ public class RallyRockStarIntegration {
 		System.out.println("Response Code:"+responseCode);
 		BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
 		String inputLine;
-		StringBuffer response = new StringBuffer();
+		StringBuilder response = new StringBuilder();
 		
 		while ((inputLine = in.readLine()) != null) {
 		    response.append(inputLine);
@@ -902,7 +880,7 @@ public class RallyRockStarIntegration {
 		return responseCode;
 
 	}
-	static boolean post(String emailId, int score, String reason, String badge) throws IOException {
+	private static boolean post(String emailId, int score, String reason, String badge) {
 
 	        String urlParameters = "{ \"fromUserEmailID\":\""+RallyConfiguration.postEmail+"\", \"toUserEmailID\":\"" +
 	        emailId+"\"" +
@@ -920,10 +898,7 @@ public class RallyRockStarIntegration {
 				responseCode = post(urlParameters,RallyConfiguration.alternatePostUrl);
 			}
 
-			if(responseCode != 200)
-				return false;
-			else				
-				return true;
+        return responseCode == 200;
 	}
 	private static void updateStarForNotUpdatingRally(String iteration) throws ClassNotFoundException, SQLException, IOException {
         Connection con = RallyConfiguration.getConnection();
@@ -951,7 +926,7 @@ public class RallyRockStarIntegration {
 	private static void updateStarForUpdatingRally(String iteration) throws ClassNotFoundException, SQLException, IOException {
         Connection con = RallyConfiguration.getConnection();
         Statement stmt = con.createStatement();
-        ResultSet rs = stmt.executeQuery("select taskOwner,group_concat(taskNumber)  from taskHistory where taskChanged=1 and iteration='"+iteration+"' group by 1");        
+        ResultSet rs = stmt.executeQuery("select taskOwner,group_concat(taskNumber) from taskHistory where taskChanged=1 and iteration='"+iteration+"' group by 1");
         while(rs.next()) {
         	post(rs.getString(1), 1, "For updating tasks "+rs.getString(2),"Process Champ");
         }      
