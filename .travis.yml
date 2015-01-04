@@ -4,12 +4,9 @@ jdk:
 - oraclejdk7
 
 branches:
-only:
 - master
 
 install: ant
-
-
 
 deploy:
   provider: releases
