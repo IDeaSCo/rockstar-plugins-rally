@@ -5,22 +5,29 @@
     </description>
     <!-- set global properties for this build -->
     <property name="src" location="src"/>
+    <property name="test" location="test"/>
     <property name="build" location="build"/>
-    <property name="dist"  location="dist"/>
-    <property name="lib"  location="lib"/>
+    <property name="build.src" location="build/src"/>
+    <property name="build.test" location="build/test"/>
+    <property name="dist" location="dist"/>
+    <property name="lib" location="lib"/>
+    <property name="reports" location="reports"/>
 
     <target name="init">
         <!-- Create the time stamp -->
         <tstamp/>
         <!-- Create the build directory structure used by compile -->
         <mkdir dir="${build}"/>
+        <mkdir dir="${build.src}"/>
+        <mkdir dir="${build.test}"/>
         <mkdir dir="${dist}"/>
+        <mkdir dir="${reports}"/>
         <mkdir dir="${dist}/lib"/>
 
         <path id="dependent.jar.classpath">
-                <fileset dir="${lib}">
-                    <include name="**/*.jar"/>
-                </fileset>
+            <fileset dir="${lib}">
+                <include name="**/*.jar"/>
+            </fileset>
         </path>
         <path id="rock.star.jar.classpath">
             <path refid="dependent.jar.classpath"/>
@@ -30,39 +37,58 @@
             <fileset dir=".">
                 <include name="**/*.properties"/>
             </fileset>
-
         </path>
-
     </target>
 
-    <target name="compile" depends="clean,init"
-            description="compile the source " >
+    <target name="compile" depends="clean,init" description="compile production source">
         <!-- Compile the java code from ${src} into ${build} -->
-        <javac srcdir="${src}" destdir="${build}" debug="true">
-            <classpath refid="dependent.jar.classpath" />
+        <javac srcdir="${src}" destdir="${build.src}" debug="true">
+            <classpath refid="dependent.jar.classpath"/>
         </javac>
     </target>
 
-    <target name="dist" depends="compile"
-            description="generate the distribution" >
-
-        <!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
-        <jar jarfile="${dist}/lib/rally_rock_star_plugin.jar" basedir="${build}"/>
+    <target name="compile.test" depends="compile" description="compile test source">
+        <javac srcdir="${test}" destdir="${build.test}" debug="true">
+            <classpath>
+                <pathelement location="${build.src}" />
+                <path refid="dependent.jar.classpath" />
+            </classpath>
+        </javac>
     </target>
 
-    <target name="clean"
-            description="clean up" >
+    <target name="dist" depends="test" description="generate the distribution">
+        <!-- Put everything in ${build.src} into the MyProject-${DSTAMP}.jar file -->
+        <jar jarfile="${dist}/lib/rally_rock_star_plugin.jar" basedir="${build.src}"/>
+    </target>
+
+    <target name="clean" description="clean up">
         <!-- Delete the ${build} and ${dist} directory trees -->
         <delete dir="${build}"/>
         <delete dir="${dist}"/>
     </target>
 
-    <target name="run" description="run job" depends="init" >
-        <java classname="com.ideas.rally.RallyRockStarIntegration" fork="true" failonerror="true" error="stderr_${DSTAMP}.log" output="stdout_${DSTAMP}.log" classpathref="rock.star.jar.classpath">
+    <target name="run" description="run job" depends="init">
+        <java classname="com.ideas.rally.RallyRockStarIntegration" fork="true" failonerror="true"
+              error="stderr_${DSTAMP}.log" output="stdout_${DSTAMP}.log" classpathref="rock.star.jar.classpath">
         </java>
     </target>
 
-    <target name="test" description="test run" depends="init" >
-        <!-- no tests -->
+    <target name="test" description="test run" depends="compile.test">
+        <junit printsummary="yes" haltonfailure="yes">
+            <classpath>
+                <pathelement location="${build.src}"/>
+                <pathelement location="${build.test}"/>
+                <path refid="dependent.jar.classpath"/>
+            </classpath>
+
+            <formatter type="plain"/>
+            <formatter type="xml"/>
+
+            <batchtest fork="once" todir="${reports}">
+                <fileset dir="${test}">
+                    <include name="**/*Test.java"/>
+                </fileset>
+            </batchtest>
+        </junit>
     </target>
 </project>
