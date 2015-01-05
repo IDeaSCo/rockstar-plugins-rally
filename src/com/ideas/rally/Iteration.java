@@ -363,7 +363,7 @@ public class Iteration {
 
     public void execute() throws Exception {
         if (!RallyConfiguration.post(RallyConfiguration.postEmail, 0, "Test Connection", "Default"))
-            throw new RuntimeException("Cannot connect to the Rally");
+            throw new RuntimeException("Cannot connect to the Rock Star App");
 
         String iteration = getIteration(currentDate);
         String previousIteration = getPreviousIteration(currentDate);
