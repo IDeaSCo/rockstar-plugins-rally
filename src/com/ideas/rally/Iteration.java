@@ -28,46 +28,41 @@ public class Iteration {
     }
 
     private String getIteration(String date) throws Exception {
-        String iterationName;
-        RallyRestApi restApi = RallyConfiguration.getRallyRestApi();
-
-        QueryRequest workSpaceRequest = new QueryRequest("Iteration");
-        workSpaceRequest.setFetch(new Fetch("Name", "StartDate", "EndDate"));
-        QueryFilter queryFilter = new QueryFilter("Project.Name", "=", RallyConfiguration.RALLY_PROJECT);
-        workSpaceRequest.setQueryFilter(queryFilter);
-        workSpaceRequest.setPageSize(200);
-        int pageCount = 0;
-        QueryResponse workSpaceResponse;
-        do {
-            workSpaceRequest.setLimit(1);
-            workSpaceRequest.setStart((pageCount * 200) + pageCount);
-            pageCount++;
-            workSpaceResponse = restApi.query(workSpaceRequest);
-            JsonArray array = workSpaceResponse.getResults();
-            for (JsonElement jsonElement : array) {
-
+        Fetch fetchList = new Fetch("Name","StartDate", "EndDate" );
+        List<String> input = new ArrayList<String>();
+        input.add(date);
+        List<String> output = new ArrayList<String>();
+        QueryFilter queryFilter = new QueryFilter("Project", "=", RallyConfiguration.RALLY_PROJECT);
+        SFDCExecutor executor = new SFDCExecutor("Iteration",fetchList,queryFilter,new SFDCCallBack() {
+            @Override
+            public boolean procesResult(JsonElement jsonElement, List<String> input, List<String> output) throws Exception {
+                String iterationName;
                 JsonObject json = jsonElement.getAsJsonObject();
                 iterationName = json.get("Name").getAsString();
                 String startDate = json.get("StartDate").getAsString().substring(0, 10);
                 String endDate = json.get("EndDate").getAsString().substring(0, 10);
                 endDate = subtractOneDay(endDate);
                 System.out.println("iterationName:" + iterationName + " startDate:" + startDate + " endDate:" + endDate);
-                if (startDate.compareTo(date) <= 0 && endDate.compareTo(date) >= 0) {
-                    populateWorkingDaysSinceStartOfIteration(startDate, date);
-                    return iterationName;
+                if (startDate.compareTo(input.get(0)) <= 0 && endDate.compareTo(input.get(0)) >= 0) {
+                    populateWorkingDaysSinceStartOfIteration(startDate, input.get(0));
+                    output.add(iterationName);
+                    return false;
                 }
+                return true;
             }
 
-        } while (workSpaceResponse.getTotalResultCount() > pageCount * 200);
+            private String subtractOneDay(String date) throws Exception {
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTime(RallyRockStarIntegration.sdf.parse(date));
+                calendar.add(Calendar.DATE, -1);
+                return RallyRockStarIntegration.sdf.format(calendar.getTime());
+            }
+        },input,output);
 
+        if(output.size() > 0) {
+            output.get(0);
+        }
         return null;
-    }
-
-    private String subtractOneDay(String date) throws Exception {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(RallyRockStarIntegration.sdf.parse(date));
-        calendar.add(Calendar.DATE, -1);
-        return RallyRockStarIntegration.sdf.format(calendar.getTime());
     }
 
     protected void populateWorkingDaysSinceStartOfIteration(String startDate, String endDate) throws Exception {
@@ -84,65 +79,49 @@ public class Iteration {
     }
 
     private String getPreviousIteration(String date) throws Exception {
-        String iterationName;
-        RallyRestApi restApi = RallyConfiguration.getRallyRestApi();
-
-        QueryRequest workSpaceRequest = new QueryRequest("Iteration");
-        workSpaceRequest.setFetch(new Fetch("Name", "StartDate", "EndDate"));
-        QueryFilter queryFilter = new QueryFilter("Project.Name", "=", RallyConfiguration.RALLY_PROJECT);
-        workSpaceRequest.setQueryFilter(queryFilter);
-        workSpaceRequest.setPageSize(200);
-        int pageCount = 0;
-        QueryResponse workSpaceResponse;
-        do {
-            workSpaceRequest.setLimit(1);
-            workSpaceRequest.setStart((pageCount * 200) + pageCount);
-            pageCount++;
-            workSpaceResponse = restApi.query(workSpaceRequest);
-            JsonArray array = workSpaceResponse.getResults();
-            for (JsonElement jsonElement : array) {
-
+        Fetch fetchList = new Fetch("Name","StartDate", "EndDate" );
+        List<String> input = new ArrayList<String>();
+        input.add(date);
+        List<String> output = new ArrayList<String>();
+        QueryFilter queryFilter = new QueryFilter("Project", "=", RallyConfiguration.RALLY_PROJECT);
+        SFDCExecutor executor = new SFDCExecutor("Iteration",fetchList,queryFilter,new SFDCCallBack() {
+            @Override
+            public boolean procesResult(JsonElement jsonElement, List<String> input, List<String> output) throws Exception {
                 JsonObject json = jsonElement.getAsJsonObject();
-                iterationName = json.get("Name").getAsString();
+                String iterationName = json.get("Name").getAsString();
                 String startDate = json.get("StartDate").getAsString().substring(0, 10);
                 String endDate = json.get("EndDate").getAsString().substring(0, 10);
                 System.out.println("iterationName:" + iterationName + " startDate:" + startDate + " endDate:" + endDate);
 
-
-                if (startDate.compareTo(date) <= 0 && endDate.compareTo(date) >= 0) {
+                if (startDate.compareTo(input.get(0)) <= 0 && endDate.compareTo(input.get(0)) >= 0) {
                     Date dStartDate = RallyRockStarIntegration.sdf.parse(startDate);
                     Calendar cal = Calendar.getInstance();
                     cal.setTime(dStartDate);
                     cal.add(Calendar.DATE, -1);
-                    return getIteration(RallyRockStarIntegration.sdf.format(cal.getTime()));
+                    output.add(getIteration(RallyRockStarIntegration.sdf.format(cal.getTime())));
+                    return false;
                 }
+                return true;
             }
 
-        } while (workSpaceResponse.getTotalResultCount() > pageCount * 200);
+        },input,output);
 
+        if(output.size() > 0) {
+            output.get(0);
+        }
         return null;
-
     }
-
     private void getTasks(String iteration) throws Exception {
         System.out.println("iteration:" + iteration);
-        RallyRestApi restApi = RallyConfiguration.getRallyRestApi();
 
-        QueryRequest workSpaceRequest = new QueryRequest("Task");
-        workSpaceRequest.setFetch(new Fetch("FormattedID", "Actuals", "Blocked", "State", "ToDo", "Owner"));
+        Fetch fetch = new Fetch("FormattedID", "Actuals", "Blocked", "State", "ToDo", "Owner" );
+        List<String> input = new ArrayList<String>();
+        input.add(iteration);
+        List<String> output = new ArrayList<String>();
         QueryFilter queryFilter = new QueryFilter("Iteration.Name", "=", iteration);
-        workSpaceRequest.setQueryFilter(queryFilter);
-        workSpaceRequest.setPageSize(200);
-        int pageCount = 0;
-        QueryResponse workSpaceResponse;
-        do {
-            workSpaceRequest.setLimit(1);
-            workSpaceRequest.setStart((pageCount * 200) + pageCount);
-            pageCount++;
-            workSpaceResponse = restApi.query(workSpaceRequest);
-            System.out.println("Total Result:" + workSpaceResponse.getTotalResultCount());
-            JsonArray array = workSpaceResponse.getResults();
-            for (JsonElement jsonElement : array) {
+        SFDCExecutor executor = new SFDCExecutor("Task",fetch,queryFilter,new SFDCCallBack() {
+            @Override
+            public boolean procesResult(JsonElement jsonElement, List<String> input, List<String> output) throws Exception {
                 JsonObject json = jsonElement.getAsJsonObject();
                 String emailAddress = getUserEmailAddress(getReferenceName(json, "Owner"));
 
@@ -151,13 +130,15 @@ public class Iteration {
                 float actual = getFloatValue(json, "Actuals");
                 float todo = getFloatValue(json, "ToDo");
                 if (emailAddress != null) {
-                    insertIntoTaskHistory(iteration, json.get("FormattedID").getAsString(), emailAddress, actual, todo, json.get("State").getAsString());
+                    insertIntoTaskHistory(input.get(0), json.get("FormattedID").getAsString(), emailAddress, actual, todo, json.get("State").getAsString());
                 }
+                return false;
             }
 
-        } while (workSpaceResponse.getTotalResultCount() > pageCount * 200);
+        },input,output);
 
     }
+
 
     private float getFloatValue(JsonObject json, String value) {
         if (json == null || json.get(value) instanceof JsonNull || json.get(value) == null) {
@@ -171,44 +152,36 @@ public class Iteration {
         updateStoryIteration(iteration);
     }
 
-    private void getStoryDefect(String storyDefect, String filter, String filterValue, String iteration)
-            throws Exception {
+
+    private void getStoryDefect(String storyDefect, String filter, String filterValue, String iteration) throws Exception {
         System.out.println("iteration:" + iteration);
-        RallyRestApi restApi = RallyConfiguration.getRallyRestApi();
 
-        QueryRequest workSpaceRequest = new QueryRequest(storyDefect);
-        workSpaceRequest.setFetch(new Fetch("FormattedID", "ScheduleState", "PlanEstimate", "Tasks", "Owner"));
+        Fetch fetch = new Fetch("FormattedID", "ScheduleState", "PlanEstimate", "Tasks", "Owner" );
+        List<String> input = new ArrayList<String>();
+        input.add(iteration);
+        List<String> output = new ArrayList<String>();
         QueryFilter queryFilter = new QueryFilter(filter, "=", filterValue);
-        workSpaceRequest.setQueryFilter(queryFilter);
-        workSpaceRequest.setPageSize(200);
-        int pageCount = 0;
-        QueryResponse workSpaceResponse;
-        do {
-            workSpaceRequest.setLimit(1);
-            workSpaceRequest.setStart((pageCount * 200) + pageCount);
-            pageCount++;
-            workSpaceResponse = restApi.query(workSpaceRequest);
-            System.out.println("Total Result:" + workSpaceResponse.getTotalResultCount());
-            JsonArray array = workSpaceResponse.getResults();
-            System.out.println("================");
-            for (JsonElement jsonElement : array) {
+        SFDCExecutor executor = new SFDCExecutor(storyDefect,fetch,queryFilter,new SFDCCallBack() {
+            @Override
+            public boolean procesResult(JsonElement jsonElement, List<String> input, List<String> output) throws Exception {
+            JsonObject json = jsonElement.getAsJsonObject();
+            String emailAddress = getUserEmailAddress(getReferenceName(json, "Owner"));
 
-                JsonObject json = jsonElement.getAsJsonObject();
-                String emailAddress = getUserEmailAddress(getReferenceName(json, "Owner"));
-
-                float planEstimate = getFloatValue(json, "PlanEstimate");
-                if (emailAddress != null) {
-                    insertIntoStoryHistory(iteration, json.get("FormattedID").getAsString(), emailAddress, planEstimate, json.get("ScheduleState").getAsString());
-                    deleteStoryTaskOwners(json.get("FormattedID").getAsString());
-                    insertStoryTaskOwners(json.get("FormattedID").getAsString(), json.getAsJsonObject("Tasks").get("_ref").getAsString());
-                }
-                System.out.println(emailAddress + ":" + json.getAsJsonObject("Tasks").get("_ref").getAsString());
+            float planEstimate = getFloatValue(json, "PlanEstimate");
+            if (emailAddress != null) {
+                insertIntoStoryHistory(input.get(0), json.get("FormattedID").getAsString(), emailAddress, planEstimate, json.get("ScheduleState").getAsString());
+                deleteStoryTaskOwners(json.get("FormattedID").getAsString());
+                insertStoryTaskOwners(json.get("FormattedID").getAsString(), json.getAsJsonObject("Tasks").get("_ref").getAsString());
             }
-            System.out.println("================");
-        } while (workSpaceResponse.getTotalResultCount() > pageCount * 200);
+            System.out.println(emailAddress + ":" + json.getAsJsonObject("Tasks").get("_ref").getAsString());
 
+                return false;
+            }
+
+        },input,output);
 
     }
+
 
     private void getStoryIteration(String storyDefect, String storyNumber, String expectedIteration) throws Exception {
         RallyRestApi restApi = RallyConfiguration.getRallyRestApi();
