@@ -12,14 +12,17 @@ public abstract class SQLExecutor {
         this.query = query;
     }
 
-    public static void executeQuery(String... statements) throws Exception {
+    public static int[] executeUpdate(String... statements) throws Exception {
+        int result[] = new int[statements.length];
+        int queryNumber=0;
         Connection con = RallyConfiguration.getConnection();
         Statement stmt = con.createStatement();
         for (String query : statements) {
-            stmt.execute(query);
+            result[queryNumber++] = stmt.executeUpdate(query);
         }
         stmt.close();
         con.close();
+        return result;
     }
 
     public void go() throws Exception {

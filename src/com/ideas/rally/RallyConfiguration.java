@@ -28,6 +28,7 @@ public class RallyConfiguration {
     private static RallyRestApi restApi;
     private static String RALLY_USER_NAME = "";
     private static String RALLY_USER_PASS = "";
+    public static boolean testRun=false;
 
     private static final Properties configurationProperties = new Properties();
 
@@ -62,6 +63,9 @@ public class RallyConfiguration {
     }
 
     public static Connection getConnection() throws Exception {
+        if(testRun){
+            return DriverManager.getConnection("jdbc:hsqldb:mem:rallytest", "sa", "");
+        }
         Class.forName("com.mysql.jdbc.Driver");
         return DriverManager.getConnection(jdbcURL, mysqlUser, mysqlPassword);
     }
@@ -83,51 +87,52 @@ public class RallyConfiguration {
 
     static void createSchema() throws Exception {
         StringBuilder storyHistory = new StringBuilder()
-                .append(" CREATE TABLE if not exists `storyhistory` ( ")
-                .append("   `iteration` char(20) DEFAULT NULL, ")
-                .append("   `storyNumber` char(10) NOT NULL DEFAULT '', ")
-                .append("   `storyOwner` char(80) DEFAULT NULL, ")
-                .append("   `planEstimate` float DEFAULT NULL, ")
-                .append("   `state` char(12) DEFAULT NULL, ")
-                .append("   `planEstimateChanged` tinyint(1) DEFAULT NULL, ")
-                .append("   `stateChanged` tinyint(1) DEFAULT NULL, ")
-                .append("   `iterationChanged` tinyint(1) DEFAULT NULL, ")
-                .append("   `spillover` int(11) DEFAULT '0', ")
-                .append("   PRIMARY KEY (`storyNumber`) ")
-                .append(" ) ENGINE=MyISAM DEFAULT CHARSET=utf8; ");
+                .append(" CREATE TABLE storyhistory ( ")
+                .append("   iteration varchar(20) DEFAULT NULL, ")
+                .append("   storyNumber varchar(10) DEFAULT '', ")
+                .append("   storyOwner varchar(80) DEFAULT NULL, ")
+                .append("   planEstimate float DEFAULT NULL, ")
+                .append("   state varchar(12) DEFAULT NULL, ")
+                .append("   planEstimateChanged int DEFAULT NULL, ")
+                .append("   stateChanged int DEFAULT NULL, ")
+                .append("   iterationChanged int DEFAULT NULL, ")
+                .append("   spillover int DEFAULT '0', ")
+                .append("   PRIMARY KEY (storyNumber) ")
+                .append(" ) ");
+        SQLExecutor.executeUpdate(storyHistory.toString());
 
         StringBuilder storyUsers = new StringBuilder()
-                .append(" CREATE TABLE if not exists `storyusers` ( ")
-                .append("   `storyNumber` char(10) NOT NULL DEFAULT '', ")
-                .append("   `storyTaskOwner` char(80) NOT NULL DEFAULT '', ")
-                .append("   PRIMARY KEY (`storyNumber`,`storyTaskOwner`) ")
-                .append(" ) ENGINE=MyISAM DEFAULT CHARSET=utf8; ");
-
+                .append(" CREATE TABLE storyusers ( ")
+                .append("   storyNumber varchar(10) DEFAULT '', ")
+                .append("   storyTaskOwner varchar(80) DEFAULT '', ")
+                .append("   PRIMARY KEY (storyNumber,storyTaskOwner) ")
+                .append(" ) ");
+        SQLExecutor.executeUpdate(storyUsers.toString());
         StringBuilder taskHistory = new StringBuilder()
-                .append(" CREATE TABLE if not exists `taskhistory` ( ")
-                .append("   `iteration` char(20) NOT NULL DEFAULT '', ")
-                .append("   `taskNumber` char(10) NOT NULL DEFAULT '', ")
-                .append("   `taskOwner` char(80) NOT NULL DEFAULT '', ")
-                .append("   `actuals` float DEFAULT NULL, ")
-                .append("   `toDo` float DEFAULT NULL, ")
-                .append("   `state` char(12) DEFAULT NULL, ")
-                .append("   `taskChanged` tinyint(1) DEFAULT NULL, ")
-                .append("   PRIMARY KEY (`iteration`,`taskNumber`,`taskOwner`) ")
-                .append(" ) ENGINE=MyISAM DEFAULT CHARSET=utf8; ");
-
+                .append(" CREATE TABLE taskhistory ( ")
+                .append("   iteration varchar(20) DEFAULT '', ")
+                .append("   taskNumber varchar(10) DEFAULT '', ")
+                .append("   taskOwner varchar(80) DEFAULT '', ")
+                .append("   actuals float DEFAULT NULL, ")
+                .append("   toDo float DEFAULT NULL, ")
+                .append("   state varchar(12) DEFAULT NULL, ")
+                .append("   taskChanged int DEFAULT NULL, ")
+                .append("   PRIMARY KEY (iteration,taskNumber,taskOwner) ")
+                .append(" ) ");
+        SQLExecutor.executeUpdate(taskHistory.toString());
         StringBuilder user = new StringBuilder()
-                .append(" CREATE TABLE if not exists `user` ( ")
-                .append("   `userName` char(90) NOT NULL DEFAULT '', ")
-                .append("   `email` char(90) DEFAULT NULL, ")
-                .append("   `leadAndAbove` tinyint(1) DEFAULT '0', ")
-                .append("   PRIMARY KEY (`userName`) ")
-                .append(" ) ENGINE=MyISAM DEFAULT CHARSET=utf8; ");
+                .append(" CREATE TABLE user ( ")
+                .append("   userName varchar(90) DEFAULT '', ")
+                .append("   email varchar(90) DEFAULT NULL, ")
+                .append("   leadAndAbove int DEFAULT '0', ")
+                .append("   PRIMARY KEY (userName) ")
+                .append(" ) ");
+        SQLExecutor.executeUpdate(user.toString());
 
-        SQLExecutor.executeQuery(storyHistory.toString(), storyUsers.toString(), taskHistory.toString(), user.toString());
     }
 
     static void optimizeTables() throws Exception {
-        SQLExecutor.executeQuery(
+        SQLExecutor.executeUpdate(
                 "optimize table storyhistory",
                 "optimize table storyusers",
                 "optimize table taskhistory",

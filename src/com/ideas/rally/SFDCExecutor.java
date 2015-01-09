@@ -45,13 +45,7 @@ public class SFDCExecutor {
             pageCount++;
             workSpaceResponse = restApi.query(workSpaceRequest);
             JsonArray array = workSpaceResponse.getResults();
-            for (JsonElement jsonElement : array) {
-                if(callBack.procesResult(jsonElement,input,output)){
-
-                }else{
-                    return;
-                }
-            }
+            callBack.procesResult(array,input,output);
 
         } while (workSpaceResponse.getTotalResultCount() > pageCount * 200);
     }

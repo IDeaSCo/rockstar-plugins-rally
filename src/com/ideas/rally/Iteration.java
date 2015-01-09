@@ -15,7 +15,7 @@ import com.rallydev.rest.util.QueryFilter;
 import java.sql.ResultSet;
 import java.util.*;
 
-import static com.ideas.rally.SQLExecutor.executeQuery;
+import static com.ideas.rally.SQLExecutor.executeUpdate;
 
 public class Iteration {
     private final List<String> workingDaysSinceStartOfIteration = new ArrayList<String>();
@@ -33,34 +33,10 @@ public class Iteration {
         input.add(date);
         List<String> output = new ArrayList<String>();
         QueryFilter queryFilter = new QueryFilter("Project", "=", RallyConfiguration.RALLY_PROJECT);
-        SFDCExecutor executor = new SFDCExecutor("Iteration",fetchList,queryFilter,new SFDCCallBack() {
-            @Override
-            public boolean procesResult(JsonElement jsonElement, List<String> input, List<String> output) throws Exception {
-                String iterationName;
-                JsonObject json = jsonElement.getAsJsonObject();
-                iterationName = json.get("Name").getAsString();
-                String startDate = json.get("StartDate").getAsString().substring(0, 10);
-                String endDate = json.get("EndDate").getAsString().substring(0, 10);
-                endDate = subtractOneDay(endDate);
-                System.out.println("iterationName:" + iterationName + " startDate:" + startDate + " endDate:" + endDate);
-                if (startDate.compareTo(input.get(0)) <= 0 && endDate.compareTo(input.get(0)) >= 0) {
-                    populateWorkingDaysSinceStartOfIteration(startDate, input.get(0));
-                    output.add(iterationName);
-                    return false;
-                }
-                return true;
-            }
-
-            private String subtractOneDay(String date) throws Exception {
-                Calendar calendar = Calendar.getInstance();
-                calendar.setTime(RallyRockStarIntegration.sdf.parse(date));
-                calendar.add(Calendar.DATE, -1);
-                return RallyRockStarIntegration.sdf.format(calendar.getTime());
-            }
-        },input,output);
-
+        SFDCExecutor executor = new SFDCExecutor("Iteration",fetchList,queryFilter,new IterationCallBack(),input,output);
         if(output.size() > 0) {
-            output.get(0);
+            populateWorkingDaysSinceStartOfIteration(output.get(1), input.get(0));
+            return output.get(0);
         }
         return null;
     }
@@ -84,30 +60,10 @@ public class Iteration {
         input.add(date);
         List<String> output = new ArrayList<String>();
         QueryFilter queryFilter = new QueryFilter("Project", "=", RallyConfiguration.RALLY_PROJECT);
-        SFDCExecutor executor = new SFDCExecutor("Iteration",fetchList,queryFilter,new SFDCCallBack() {
-            @Override
-            public boolean procesResult(JsonElement jsonElement, List<String> input, List<String> output) throws Exception {
-                JsonObject json = jsonElement.getAsJsonObject();
-                String iterationName = json.get("Name").getAsString();
-                String startDate = json.get("StartDate").getAsString().substring(0, 10);
-                String endDate = json.get("EndDate").getAsString().substring(0, 10);
-                System.out.println("iterationName:" + iterationName + " startDate:" + startDate + " endDate:" + endDate);
-
-                if (startDate.compareTo(input.get(0)) <= 0 && endDate.compareTo(input.get(0)) >= 0) {
-                    Date dStartDate = RallyRockStarIntegration.sdf.parse(startDate);
-                    Calendar cal = Calendar.getInstance();
-                    cal.setTime(dStartDate);
-                    cal.add(Calendar.DATE, -1);
-                    output.add(getIteration(RallyRockStarIntegration.sdf.format(cal.getTime())));
-                    return false;
-                }
-                return true;
-            }
-
-        },input,output);
+        SFDCExecutor executor = new SFDCExecutor("Iteration",fetchList,queryFilter,new PreviousIterationCallBack(),input,output);
 
         if(output.size() > 0) {
-            output.get(0);
+          return  output.get(0);
         }
         return null;
     }
@@ -119,33 +75,10 @@ public class Iteration {
         input.add(iteration);
         List<String> output = new ArrayList<String>();
         QueryFilter queryFilter = new QueryFilter("Iteration.Name", "=", iteration);
-        SFDCExecutor executor = new SFDCExecutor("Task",fetch,queryFilter,new SFDCCallBack() {
-            @Override
-            public boolean procesResult(JsonElement jsonElement, List<String> input, List<String> output) throws Exception {
-                JsonObject json = jsonElement.getAsJsonObject();
-                String emailAddress = getUserEmailAddress(getReferenceName(json, "Owner"));
-
-                System.out.println(json.get("FormattedID") + ":" + json.get("Actuals") + ":" + json.get("ToDo") + ":" + json.get("State") + ":" + emailAddress);
-
-                float actual = getFloatValue(json, "Actuals");
-                float todo = getFloatValue(json, "ToDo");
-                if (emailAddress != null) {
-                    insertIntoTaskHistory(input.get(0), json.get("FormattedID").getAsString(), emailAddress, actual, todo, json.get("State").getAsString());
-                }
-                return false;
-            }
-
-        },input,output);
-
+        SFDCExecutor executor = new SFDCExecutor("Task",fetch,queryFilter,new TaskCallBack(),input,output);
     }
 
 
-    private float getFloatValue(JsonObject json, String value) {
-        if (json == null || json.get(value) instanceof JsonNull || json.get(value) == null) {
-            return 0.0f;
-        }
-        return json.get(value).getAsFloat();
-    }
 
     private void getStories(String iteration, String storyDefect) throws Exception {
         getStoryDefect(storyDefect, "Iteration.Name", iteration, iteration);
@@ -163,58 +96,52 @@ public class Iteration {
         QueryFilter queryFilter = new QueryFilter(filter, "=", filterValue);
         SFDCExecutor executor = new SFDCExecutor(storyDefect,fetch,queryFilter,new SFDCCallBack() {
             @Override
-            public boolean procesResult(JsonElement jsonElement, List<String> input, List<String> output) throws Exception {
-            JsonObject json = jsonElement.getAsJsonObject();
-            String emailAddress = getUserEmailAddress(getReferenceName(json, "Owner"));
+            public void procesResult(JsonArray jsonArray, List<String> input, List<String> output) throws Exception {
+                for (JsonElement jsonElement : jsonArray) {
+                    JsonObject json = jsonElement.getAsJsonObject();
+                    String emailAddress = new EmailCallBack().getUserEmailAddress(getReferenceName(json, "Owner"));
 
-            float planEstimate = getFloatValue(json, "PlanEstimate");
-            if (emailAddress != null) {
-                insertIntoStoryHistory(input.get(0), json.get("FormattedID").getAsString(), emailAddress, planEstimate, json.get("ScheduleState").getAsString());
-                deleteStoryTaskOwners(json.get("FormattedID").getAsString());
-                insertStoryTaskOwners(json.get("FormattedID").getAsString(), json.getAsJsonObject("Tasks").get("_ref").getAsString());
+                    float planEstimate = getFloatValue(json, "PlanEstimate");
+                    if (emailAddress != null) {
+                        insertIntoStoryHistory(input.get(0), json.get("FormattedID").getAsString(), emailAddress, planEstimate, json.get("ScheduleState").getAsString());
+                        deleteStoryTaskOwners(json.get("FormattedID").getAsString());
+                        insertStoryTaskOwners(json.get("FormattedID").getAsString(), json.getAsJsonObject("Tasks").get("_ref").getAsString());
+                    }
+                    System.out.println(emailAddress + ":" + json.getAsJsonObject("Tasks").get("_ref").getAsString());
+                }
             }
-            System.out.println(emailAddress + ":" + json.getAsJsonObject("Tasks").get("_ref").getAsString());
-
-                return false;
-            }
-
         },input,output);
 
     }
 
 
     private void getStoryIteration(String storyDefect, String storyNumber, String expectedIteration) throws Exception {
-        RallyRestApi restApi = RallyConfiguration.getRallyRestApi();
-        QueryRequest workSpaceRequest = new QueryRequest(storyDefect);
-        workSpaceRequest.setFetch(new Fetch("Iteration"));
-        QueryFilter queryFilter = new QueryFilter("FormattedID", "=", storyNumber);
-        workSpaceRequest.setQueryFilter(queryFilter);
-        workSpaceRequest.setPageSize(200);
-        int pageCount = 0;
-        QueryResponse workSpaceResponse;
-        do {
-            workSpaceRequest.setLimit(1);
-            workSpaceRequest.setStart((pageCount * 200) + pageCount);
-            pageCount++;
-            workSpaceResponse = restApi.query(workSpaceRequest);
-            System.out.println("Total Result:" + workSpaceResponse.getTotalResultCount());
-            JsonArray array = workSpaceResponse.getResults();
-            System.out.println("================");
-            for (JsonElement jsonElement : array) {
 
-                JsonObject json = jsonElement.getAsJsonObject();
-                System.out.println("storyNumber:'" + storyNumber + getReferenceName(json, "Iteration") + "'");
-                if (getReferenceName(json, "Iteration") == null || !getReferenceName(json, "Iteration").equals(expectedIteration)) {
-                    System.out.println("updating iteration name..");
-                    updateStoryIterationNumber(storyNumber, getReferenceName(json, "Iteration"));
+        Fetch fetch = new Fetch("FormattedID", "Actuals", "Blocked", "State", "ToDo", "Owner" );
+        List<String> input = new ArrayList<String>();
+        input.add(storyNumber);
+        input.add(expectedIteration);
+        List<String> output = new ArrayList<String>();
+        QueryFilter queryFilter = new QueryFilter("FormattedID", "=", storyNumber);
+        SFDCExecutor executor = new SFDCExecutor("Iteration",fetch,queryFilter,new SFDCCallBack() {
+            @Override
+            public void procesResult(JsonArray jsonArray, List<String> input, List<String> output) throws Exception {
+                for (JsonElement jsonElement : jsonArray) {
+                    JsonObject json = jsonElement.getAsJsonObject();
+                    System.out.println("storyNumber:'" + input.get(0) + getReferenceName(json, "Iteration") + "'");
+                    if (getReferenceName(json, "Iteration") == null || !getReferenceName(json, "Iteration").equals(input.get(1))) {
+                        System.out.println("updating iteration name..");
+                        updateStoryIterationNumber(input.get(0), getReferenceName(json, "Iteration"));
+                    }
                 }
             }
-            System.out.println("================");
-        } while (workSpaceResponse.getTotalResultCount() > pageCount * 200);
+
+        },input,output);
+
     }
 
     private void updateStoryIterationNumber(String storyNumber, String iterationName) throws Exception {
-        executeQuery("insert into storyhistory(storyNumber,iteration) values ('" + storyNumber + "','" + iterationName + "') on duplicate key update iterationChanged=if(VALUES(iteration) = 'null',0,if(VALUES(iteration) <> iteration,1,0)), iteration=VALUES(iteration)");
+        executeUpdate("insert into storyhistory(storyNumber,iteration) values ('" + storyNumber + "','" + iterationName + "') on duplicate key update iterationChanged=if(VALUES(iteration) = 'null',0,if(VALUES(iteration) <> iteration,1,0)), iteration=VALUES(iteration)");
     }
 
     private void updateStoryIteration(final String iteration) throws Exception {
@@ -229,7 +156,7 @@ public class Iteration {
     }
 
     private void deleteStoryTaskOwners(String storyNumber) throws Exception {
-        executeQuery("delete from storyUsers where storyNumber='" + storyNumber + "'");
+        executeUpdate("delete from storyUsers where storyNumber='" + storyNumber + "'");
     }
 
     private void insertStoryTaskOwners(String storyNumber, String taskURL) throws Exception {
@@ -242,7 +169,7 @@ public class Iteration {
             JsonElement element = jsonArray.get(i);
             JsonObject childObject = element.getAsJsonObject();
             if (!(childObject.get("Owner") instanceof JsonNull)) {
-                String email = getUserEmailAddress(childObject.getAsJsonObject("Owner").get("_refObjectName").getAsString());
+                String email = new EmailCallBack().getUserEmailAddress(childObject.getAsJsonObject("Owner").get("_refObjectName").getAsString());
                 if (email != null) {
                     insertIntoStoryUsers(storyNumber, email);
                 }
@@ -262,77 +189,16 @@ public class Iteration {
                 .append(" storyOwner=VALUES(storyOwner), ")
                 .append(" planEstimate=VALUES(planEstimate), ")
                 .append(" state=VALUES(state) ");
-        executeQuery(buffer.toString());
+        executeUpdate(buffer.toString());
     }
 
     private void insertIntoStoryUsers(String storyNumber, String emailAddress) throws Exception {
-        executeQuery("insert into storyUsers(storyNumber,storyTaskOwner) " + " values ('" + storyNumber + "','" + emailAddress + "') " + " on duplicate key update " + " storyTaskOwner=VALUES(storyTaskOwner) ");
+        executeUpdate("insert into storyUsers(storyNumber,storyTaskOwner) " + " values ('" + storyNumber + "','" + emailAddress + "') " + " on duplicate key update " + " storyTaskOwner=VALUES(storyTaskOwner) ");
     }
 
-    private String getUserEmailAddress(String owner) throws Exception {
-        if (owner == null) return null;
 
-        String email = getEmailFromDB(owner);
-        if (email == null) {
-            RallyRestApi restApi = RallyConfiguration.getRallyRestApi();
-            QueryRequest workSpaceRequest = new QueryRequest("User");
-            workSpaceRequest.setFetch(new Fetch("EmailAddress"));
-            QueryFilter queryFilter = new QueryFilter("DisplayName", "=", owner);
-            workSpaceRequest.setQueryFilter(queryFilter);
-            workSpaceRequest.setPageSize(200);
-            int pageCount = 0;
-            QueryResponse workSpaceResponse;
-            do {
-                workSpaceRequest.setLimit(1);
-                workSpaceRequest.setStart((pageCount * 200) + pageCount);
-                pageCount++;
-                workSpaceResponse = restApi.query(workSpaceRequest);
-                System.out.println("Total Result:" + workSpaceResponse.getTotalResultCount());
-                JsonArray array = workSpaceResponse.getResults();
-                for (JsonElement jsonElement : array) {
-                    JsonObject json = jsonElement.getAsJsonObject();
-                    email = json.get("EmailAddress").getAsString();
-                    updateEmail(owner, email);
-                }
 
-            } while (workSpaceResponse.getTotalResultCount() > pageCount * 200);
-        }
-        return email;
-    }
 
-    private void updateEmail(String owner, String email) throws Exception {
-        executeQuery("insert ignore into user(userName,email) values('" + owner + "','" + email + "')");
-    }
-
-    private String getEmailFromDB(String owner) throws Exception {
-        SQLExecutor SQLExecutor = new SQLExecutor("select email from user where userName='" + owner + "'") {
-            @Override
-            public void accept(ResultSet rs) throws Exception {
-                this.result = rs.getString(1);
-            }
-        };
-        SQLExecutor.go();
-        return SQLExecutor.result;
-    }
-
-    private String getReferenceName(JsonObject json, String name) {
-        if (json.get(name) instanceof JsonNull)
-            return null;
-        JsonObject owner = json.get(name).getAsJsonObject();
-        return owner.get("_refObjectName").getAsString();
-    }
-
-    private void insertIntoTaskHistory(String iteration, String taskNumber, String taskOwner, float actual, float todo, String state) throws Exception {
-        StringBuilder buffer = new StringBuilder()
-                .append(" insert into taskHistory(iteration,taskNumber,taskOwner,actuals,toDo,state,taskChanged) ")
-                .append(" values ('" + iteration + "','" + taskNumber + "','" + taskOwner + "'," + actual + "," + todo + ",'" + state + "',1) ")
-                .append(" on duplicate key update ")
-                .append(" taskChanged=if(actuals<>VALUES(actuals),1,if(toDo<>VALUES(toDo),1,if(state<>VALUES(state),1,0))), ")
-                .append(" actuals=VALUES(actuals), ")
-                .append(" toDo=VALUES(toDo), ")
-                .append(" state=VALUES(state) ");
-        executeQuery(buffer.toString());
-    }
 
     public void execute() throws Exception {
         if (!RallyConfiguration.post(RallyConfiguration.postEmail, 0, "Test Connection", "Default"))
@@ -463,11 +329,11 @@ public class Iteration {
     }
 
     private void deleteTaskNumber(String taskNumber) throws Exception {
-        executeQuery("delete from taskHistory where taskNumber='" + taskNumber + "'");
+        executeUpdate("delete from taskHistory where taskNumber='" + taskNumber + "'");
     }
 
     private void deleteStoryNumber(String storyNumber) throws Exception {
-        executeQuery(
+        executeUpdate(
                 "delete from storyhistory where storyNumber='" + storyNumber + "'",
                 "delete from storyusers where storyNumber='" + storyNumber + "'"
         );
@@ -507,7 +373,7 @@ public class Iteration {
             }
         }.go();
 
-        executeQuery("update storyHistory set stateChanged=0 where stateChanged=1 and state='Completed' and iteration='" + iteration + "'");
+        executeUpdate("update storyHistory set stateChanged=0 where stateChanged=1 and state='Completed' and iteration='" + iteration + "'");
     }
 
     private void updateStarForSpillingOverStory() throws Exception {
@@ -543,7 +409,7 @@ public class Iteration {
             }
         }.go();
 
-        executeQuery("update storyHistory set planEstimateChanged=0 where planEstimateChanged=1 and iteration='" + iteration + "'");
+        executeUpdate("update storyHistory set planEstimateChanged=0 where planEstimateChanged=1 and iteration='" + iteration + "'");
     }
 
     private void updateStarForGettingStoryAcceptedInIteration(String iteration, final String date) throws Exception {
@@ -563,7 +429,7 @@ public class Iteration {
             }
         }.go();
 
-        executeQuery("update storyHistory set stateChanged=0 where stateChanged>=1 and state='Accepted' and iteration='" + iteration + "'");
+        executeUpdate("update storyHistory set stateChanged=0 where stateChanged>=1 and state='Accepted' and iteration='" + iteration + "'");
     }
 
     protected int getBonusStarsForAcceptingTheStory(int stars, String date, int spillover) {
@@ -601,6 +467,6 @@ public class Iteration {
                 RallyConfiguration.post(rs.getString(1), 1, "For updating tasks " + rs.getString(2), "Process Champ");
             }
         }.go();
-        executeQuery("update taskHistory set taskChanged=0 where iteration='" + iteration + "'");
+        executeUpdate("update taskHistory set taskChanged=0 where iteration='" + iteration + "'");
     }
 }
