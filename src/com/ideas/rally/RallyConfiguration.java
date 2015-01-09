@@ -64,7 +64,7 @@ public class RallyConfiguration {
 
     public static Connection getConnection() throws Exception {
         if(testRun){
-            return DriverManager.getConnection("jdbc:hsqldb:mem:rallytest", "sa", "");
+            return DriverManager.getConnection("jdbc:h2:./rallytest;MODE=MySQL", "sa", "");
         }
         Class.forName("com.mysql.jdbc.Driver");
         return DriverManager.getConnection(jdbcURL, mysqlUser, mysqlPassword);
@@ -87,7 +87,7 @@ public class RallyConfiguration {
 
     static void createSchema() throws Exception {
         StringBuilder storyHistory = new StringBuilder()
-                .append(" CREATE TABLE storyhistory ( ")
+                .append(" CREATE TABLE if not exists storyhistory ( ")
                 .append("   iteration varchar(20) DEFAULT NULL, ")
                 .append("   storyNumber varchar(10) DEFAULT '', ")
                 .append("   storyOwner varchar(80) DEFAULT NULL, ")
@@ -102,14 +102,14 @@ public class RallyConfiguration {
         SQLExecutor.executeUpdate(storyHistory.toString());
 
         StringBuilder storyUsers = new StringBuilder()
-                .append(" CREATE TABLE storyusers ( ")
+                .append(" CREATE TABLE if not exists  storyusers ( ")
                 .append("   storyNumber varchar(10) DEFAULT '', ")
                 .append("   storyTaskOwner varchar(80) DEFAULT '', ")
                 .append("   PRIMARY KEY (storyNumber,storyTaskOwner) ")
                 .append(" ) ");
         SQLExecutor.executeUpdate(storyUsers.toString());
         StringBuilder taskHistory = new StringBuilder()
-                .append(" CREATE TABLE taskhistory ( ")
+                .append(" CREATE TABLE if not exists taskhistory ( ")
                 .append("   iteration varchar(20) DEFAULT '', ")
                 .append("   taskNumber varchar(10) DEFAULT '', ")
                 .append("   taskOwner varchar(80) DEFAULT '', ")
@@ -121,7 +121,7 @@ public class RallyConfiguration {
                 .append(" ) ");
         SQLExecutor.executeUpdate(taskHistory.toString());
         StringBuilder user = new StringBuilder()
-                .append(" CREATE TABLE user ( ")
+                .append(" CREATE TABLE if not exists user ( ")
                 .append("   userName varchar(90) DEFAULT '', ")
                 .append("   email varchar(90) DEFAULT NULL, ")
                 .append("   leadAndAbove int DEFAULT '0', ")

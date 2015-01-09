@@ -12,6 +12,7 @@ import java.util.List;
  * Created by idnasr on 1/5/2015.
  */
 public abstract class SFDCCallBack {
+
         public abstract void procesResult(JsonArray jsonArray, List<String> input, List<String> output) throws Exception;
 
         protected String getReferenceName(JsonObject json, String name) {

@@ -40,7 +40,7 @@ public class PreviousIterationCallBackTest {
     public void testIteration_iteration_null() throws Exception {
         PreviousIterationCallBack callBack = new PreviousIterationCallBack();
         List input = new ArrayList();
-        input.add("2014-01-28");
+        input.add("2013-01-28");
         List output = new ArrayList();
         callBack.procesResult(getIterationArray(),input,output);
         Assert.assertEquals(0,output.size());

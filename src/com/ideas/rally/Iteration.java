@@ -145,9 +145,9 @@ public class Iteration {
     }
 
     private void updateStoryIteration(final String iteration) throws Exception {
-        new SQLExecutor("select storyNumber from storyhistory where iteration='" + iteration + "'") {
+        new SQLExecutor(null,"select storyNumber from storyhistory where iteration='" + iteration + "'") {
             @Override
-            public void accept(ResultSet rs) throws Exception {
+            public void accept(ResultSet rs, Map<String,String> input) throws Exception {
                 String storyNumber = rs.getString(1);
                 String storyType = storyNumber.startsWith("US") ? "HierarchicalRequirement" : "Defect";
                 getStoryIteration(storyType, storyNumber, iteration);
@@ -234,9 +234,9 @@ public class Iteration {
     }
 
     private void updateStatusOfUnacceptedStoriesInPreviousIteration(final String previousIteration) throws Exception {
-        new SQLExecutor("select storyNumber, storyHistory.iteration, state from storyHistory where iteration='" + previousIteration + "' and state<>'Accepted'") {
+        new SQLExecutor(null,"select storyNumber, storyHistory.iteration, state from storyHistory where iteration='" + previousIteration + "' and state<>'Accepted'") {
             @Override
-            public void accept(ResultSet rs) throws Exception {
+            public void accept(ResultSet rs, Map<String,String> input) throws Exception {
                 String storyNumber = rs.getString(1);
                 String storyType = storyNumber.startsWith("US") ? "HierarchicalRequirement" : "Defect";
                 getStoryDefect(storyType, "FormattedID", storyNumber, previousIteration);
@@ -246,9 +246,9 @@ public class Iteration {
 
     private void cleanUpDeletedStoriesDefects(String iteration) throws Exception {
         System.out.println("iteration:" + iteration);
-        new SQLExecutor("select storyNumber from storyhistory where iteration='" + iteration + "'") {
+        new SQLExecutor(null, "select storyNumber from storyhistory where iteration='" + iteration + "'") {
             @Override
-            public void accept(ResultSet rs) throws Exception {
+            public void accept(ResultSet rs, Map<String,String> input) throws Exception {
                 cleanUpStoriesIfRecycled(rs.getString(1));
             }
         }.go();
@@ -290,9 +290,9 @@ public class Iteration {
 
     private void cleanUpDeletedTasks(String iteration) throws Exception {
         System.out.println("iteration:" + iteration);
-        new SQLExecutor("select taskNumber from taskHistory where iteration='" + iteration + "'") {
+        new SQLExecutor(null,"select taskNumber from taskHistory where iteration='" + iteration + "'") {
             @Override
-            public void accept(ResultSet rs) throws Exception {
+            public void accept(ResultSet rs,Map<String,String> input) throws Exception {
                 cleanUpTaskIfRecycled(rs.getString(1));
             }
         }.go();
@@ -340,35 +340,35 @@ public class Iteration {
     }
 
     private void updateStarForLeavingStoryInPriorIterationsWhichIsNotAccepted(String iteration) throws Exception {
-        new SQLExecutor("select storyNumber,storyTaskOwner,storyHistory.iteration,state from storyHistory left join storyUsers using (storyNumber) where iteration='" + iteration + "'  and state<>'Accepted'") {
+        new SQLExecutor(null,"select storyNumber,storyTaskOwner,storyHistory.iteration,state from storyHistory left join storyUsers using (storyNumber) where iteration='" + iteration + "'  and state<>'Accepted'") {
             @Override
-            public void accept(ResultSet rs) throws Exception {
+            public void accept(ResultSet rs, Map<String,String> input) throws Exception {
                 RallyConfiguration.post(rs.getString(2), -5, "For leaving the story/defect :" + rs.getString(1) + " in iteration :" + rs.getString(3) + " in state " + rs.getString(4), "Process Violator");
             }
         }.go();
     }
 
     private void updateStarForNotTaskingStory(String iteration) throws Exception {
-        new SQLExecutor("select storyNumber,storyOwner,storyTaskOwner from storyHistory left join storyUsers using (storyNumber) where iteration='" + iteration + "' group by 1  having storyTaskOwner is null ") {
+        new SQLExecutor(null,"select storyNumber,storyOwner,storyTaskOwner from storyHistory left join storyUsers using (storyNumber) where iteration='" + iteration + "' group by 1  having storyTaskOwner is null ") {
             @Override
-            public void accept(ResultSet rs) throws Exception {
+            public void accept(ResultSet rs, Map<String,String> input) throws Exception {
                 RallyConfiguration.post(rs.getString(2), -5, "For not tasking story:" + rs.getString(1), "Process Violator");
             }
         }.go();
 
 
-        new SQLExecutor("select storyNumber,email from user cross join (select storyNumber from storyHistory left join storyUsers using (storyNumber) where iteration='" + iteration + "' and storyTaskOwner is null group by 1) as a where leadandabove=1") {
+        new SQLExecutor(null,"select storyNumber,email from user cross join (select storyNumber from storyHistory left join storyUsers using (storyNumber) where iteration='" + iteration + "' and storyTaskOwner is null group by 1) as a where leadandabove=1") {
             @Override
-            public void accept(ResultSet rs) throws Exception {
+            public void accept(ResultSet rs, Map<String,String> input) throws Exception {
                 RallyConfiguration.post(rs.getString(2), -2, "For not tasking story:" + rs.getString(1), "Process Violator");
             }
         }.go();
     }
 
     private void updateStarForCompletingStoryInIteration(String iteration) throws Exception {
-        new SQLExecutor("select distinct storyNumber,storyOwner from storyHistory where stateChanged=1 and state='Completed' and iteration='" + iteration + "' " + "  union DISTINCT select distinct storyNumber,storyTaskOwner from storyUsers where storynumber in (select storyNumber from storyHistory where stateChanged=1 and state='Completed' and iteration='" + iteration + "') ") {
+        new SQLExecutor(null,"select distinct storyNumber,storyOwner from storyHistory where stateChanged=1 and state='Completed' and iteration='" + iteration + "' " + "  union DISTINCT select distinct storyNumber,storyTaskOwner from storyUsers where storynumber in (select storyNumber from storyHistory where stateChanged=1 and state='Completed' and iteration='" + iteration + "') ") {
             @Override
-            public void accept(ResultSet rs) throws Exception {
+            public void accept(ResultSet rs, Map<String,String> input) throws Exception {
                 RallyConfiguration.post(rs.getString(2), 10, "For completing the story:" + rs.getString(1), "Delivery Champ");
             }
         }.go();
@@ -377,34 +377,34 @@ public class Iteration {
     }
 
     private void updateStarForSpillingOverStory() throws Exception {
-        new SQLExecutor("select storyNumber,storyTaskOwner from storyUsers where storynumber in (select storyNumber from storyHistory where iterationChanged=1)") {
+        new SQLExecutor(null,"select storyNumber,storyTaskOwner from storyUsers where storynumber in (select storyNumber from storyHistory where iterationChanged=1)") {
             @Override
-            public void accept(ResultSet rs) throws Exception {
+            public void accept(ResultSet rs, Map<String,String> input) throws Exception {
                 RallyConfiguration.post(rs.getString(2), -20, "For story spill over:" + rs.getString(1), "Spillover Champ");
             }
         }.go();
 
-        new SQLExecutor("select storyNumber,email from user cross join storyHistory where iterationChanged=1 and leadandabove=1") {
+        new SQLExecutor(null,"select storyNumber,email from user cross join storyHistory where iterationChanged=1 and leadandabove=1") {
             @Override
-            public void accept(ResultSet rs) throws Exception {
+            public void accept(ResultSet rs, Map<String,String> input) throws Exception {
                 RallyConfiguration.post(rs.getString(2), -5, "For story spill over:" + rs.getString(1), "Spillover Champ");
             }
         }.go();
     }
 
     private void updateStarForNotUpdatingStoryPlannedEstimates(String iteration) throws Exception {
-        new SQLExecutor("select storyNumber,storyOwner from storyHistory where planEstimate=0 and iteration='" + iteration + "' " + "  union all " + "  select storyNumber,storyTaskOwner from storyUsers where storynumber in (select storyNumber from storyHistory where planEstimate=0 and iteration='" + iteration + "') " + "  union all " + "  select storyNumber,email from user cross join storyHistory where planEstimate=0 and iteration='" + iteration + "' and leadandabove=1") {
+        new SQLExecutor(null,"select storyNumber,storyOwner from storyHistory where planEstimate=0 and iteration='" + iteration + "' " + "  union all " + "  select storyNumber,storyTaskOwner from storyUsers where storynumber in (select storyNumber from storyHistory where planEstimate=0 and iteration='" + iteration + "') " + "  union all " + "  select storyNumber,email from user cross join storyHistory where planEstimate=0 and iteration='" + iteration + "' and leadandabove=1") {
             @Override
-            public void accept(ResultSet rs) throws Exception {
+            public void accept(ResultSet rs, Map<String,String> input) throws Exception {
                 RallyConfiguration.post(rs.getString(2), -2, "Not having planned estimates on story:" + rs.getString(1), "Process Violator");
             }
         }.go();
     }
 
     private void updateStarForUpdatingStoryPlannedEstimates(String iteration) throws Exception {
-        new SQLExecutor("select storyNumber,storyOwner from storyHistory where planEstimateChanged=1 and iteration='" + iteration + "' " + "  union all " + "  select storyNumber,storyTaskOwner from storyUsers where storynumber in (select storyNumber from storyHistory where planEstimateChanged=1 and iteration='" + iteration + "') ") {
+        new SQLExecutor(null,"select storyNumber,storyOwner from storyHistory where planEstimateChanged=1 and iteration='" + iteration + "' " + "  union all " + "  select storyNumber,storyTaskOwner from storyUsers where storynumber in (select storyNumber from storyHistory where planEstimateChanged=1 and iteration='" + iteration + "') ") {
             @Override
-            public void accept(ResultSet rs) throws Exception {
+            public void accept(ResultSet rs, Map<String,String> input) throws Exception {
                 RallyConfiguration.post(rs.getString(2), 1, "For having planned estimates on story:" + rs.getString(1), "Process Champ");
             }
         }.go();
@@ -413,18 +413,18 @@ public class Iteration {
     }
 
     private void updateStarForGettingStoryAcceptedInIteration(String iteration, final String date) throws Exception {
-        new SQLExecutor("select distinct storyNumber,storyOwner,stateChanged,spillover from storyHistory where stateChanged>=1 and state='Accepted' and iteration='" + iteration + "' " + "  union distinct " + "  select distinct storyNumber,storyTaskOwner,stateChanged,spillover from storyUsers inner join (	select storyNumber,stateChanged,spillover from storyHistory where stateChanged>=1 and state='Accepted' and iteration='" + iteration + "') as a using (storyNumber) ") {
+        new SQLExecutor(null,"select distinct storyNumber,storyOwner,stateChanged,spillover from storyHistory where stateChanged>=1 and state='Accepted' and iteration='" + iteration + "' " + "  union distinct " + "  select distinct storyNumber,storyTaskOwner,stateChanged,spillover from storyUsers inner join (	select storyNumber,stateChanged,spillover from storyHistory where stateChanged>=1 and state='Accepted' and iteration='" + iteration + "') as a using (storyNumber) ") {
             @Override
-            public void accept(ResultSet rs) throws Exception {
+            public void accept(ResultSet rs, Map<String,String> input) throws Exception {
                 int stars = getStarsWhenStoryCompletedAndAcceptedInTheSameDay(rs);
                 stars = getBonusStarsForAcceptingTheStory(stars, date, rs.getInt(4));
                 RallyConfiguration.post(rs.getString(2), stars, "For getting story Accepted:" + rs.getString(1), "Delivery Champ");
             }
         }.go();
 
-        new SQLExecutor("select storyNumber,email from user cross join (select storyNumber from storyHistory where stateChanged>=1 and state='Accepted' and iteration='" + iteration + "' ) as a where leadandabove=1") {
+        new SQLExecutor(null,"select storyNumber,email from user cross join (select storyNumber from storyHistory where stateChanged>=1 and state='Accepted' and iteration='" + iteration + "' ) as a where leadandabove=1") {
             @Override
-            public void accept(ResultSet rs) throws Exception {
+            public void accept(ResultSet rs, Map<String,String> input) throws Exception {
                 RallyConfiguration.post(rs.getString(2), 1, "For team getting story Accepted:" + rs.getString(1), "Delivery Champ");
             }
         }.go();
@@ -452,18 +452,18 @@ public class Iteration {
     }
 
     private void updateStarForNotUpdatingRally(String iteration) throws Exception {
-        new SQLExecutor("select taskOwner,group_concat(taskNumber) from taskHistory where " + " taskOwner in " + " ( " + " select distinct taskOwner from taskHistory where taskOwner not in ( " + " 	select distinct taskOwner from taskHistory where taskChanged=1 and iteration='" + iteration + "' " + " ) and iteration = '" + iteration + "' and state<>'Completed' " + " ) " + " and iteration = '" + iteration + "' " + " and state<>'Completed' " + " group by 1 ") {
+        new SQLExecutor(null,"select taskOwner,group_concat(taskNumber) from taskHistory where " + " taskOwner in " + " ( " + " select distinct taskOwner from taskHistory where taskOwner not in ( " + " 	select distinct taskOwner from taskHistory where taskChanged=1 and iteration='" + iteration + "' " + " ) and iteration = '" + iteration + "' and state<>'Completed' " + " ) " + " and iteration = '" + iteration + "' " + " and state<>'Completed' " + " group by 1 ") {
             @Override
-            public void accept(ResultSet rs) throws Exception {
+            public void accept(ResultSet rs, Map<String,String> input) throws Exception {
                 RallyConfiguration.post(rs.getString(1), -5, "For not updating either of tasks " + rs.getString(2), "Process Violator");
             }
         }.go();
     }
 
     private void updateStarForUpdatingRally(String iteration) throws Exception {
-        new SQLExecutor("select taskOwner,group_concat(taskNumber) from taskHistory where taskChanged=1 and iteration='" + iteration + "' group by 1") {
+        new SQLExecutor(null,"select taskOwner,group_concat(taskNumber) from taskHistory where taskChanged=1 and iteration='" + iteration + "' group by 1") {
             @Override
-            public void accept(ResultSet rs) throws Exception {
+            public void accept(ResultSet rs, Map<String,String> input) throws Exception {
                 RallyConfiguration.post(rs.getString(1), 1, "For updating tasks " + rs.getString(2), "Process Champ");
             }
         }.go();

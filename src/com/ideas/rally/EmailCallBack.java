@@ -9,6 +9,7 @@ import com.rallydev.rest.util.QueryFilter;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static com.ideas.rally.SQLExecutor.executeUpdate;
 
@@ -47,9 +48,9 @@ public class EmailCallBack extends SFDCCallBack{
     }
 
     private String getEmailFromDB(String owner) throws Exception {
-        SQLExecutor SQLExecutor = new SQLExecutor("select email from user where userName='" + owner + "'") {
+        SQLExecutor SQLExecutor = new SQLExecutor(null,"select email from user where userName='" + owner + "'") {
             @Override
-            public void accept(ResultSet rs) throws Exception {
+            public void accept(ResultSet rs,Map<String,String>input) throws Exception {
                 this.result = rs.getString(1);
             }
         };
