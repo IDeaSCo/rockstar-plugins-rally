@@ -4,15 +4,11 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import java.util.Calendar;
 import java.util.List;
 
-/**
- * Created by idnasr on 1/8/2015.
- */
 public class IterationCallBack extends SFDCCallBack{
     @Override
-    public void procesResult(JsonArray array, List<String> input, List<String> output) throws Exception {
+    public void processResult(JsonArray array, List<String> input, List<String> output) throws Exception {
         for (JsonElement jsonElement : array) {
             String iterationName;
             JsonObject json = jsonElement.getAsJsonObject();

@@ -9,16 +9,12 @@ import com.rallydev.rest.util.QueryFilter;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static com.ideas.rally.SQLExecutor.executeUpdate;
 
-/**
- * Created by idnasr on 1/8/2015.
- */
 public class EmailCallBack extends SFDCCallBack{
     @Override
-    public void procesResult(JsonArray jsonArray, List<String> input, List<String> output) throws Exception {
+    public void processResult(JsonArray jsonArray, List<String> input, List<String> output) throws Exception {
         for (JsonElement jsonElement : jsonArray) {
             JsonObject json = jsonElement.getAsJsonObject();
             String email = json.get("EmailAddress").getAsString();
@@ -48,9 +44,9 @@ public class EmailCallBack extends SFDCCallBack{
     }
 
     private String getEmailFromDB(String owner) throws Exception {
-        SQLExecutor SQLExecutor = new SQLExecutor(null,"select email from user where userName='" + owner + "'") {
+        SQLExecutor SQLExecutor = new SQLExecutor("select email from user where userName='" + owner + "'") {
             @Override
-            public void accept(ResultSet rs,Map<String,String>input) throws Exception {
+            public void accept(ResultSet rs) throws Exception {
                 this.result = rs.getString(1);
             }
         };

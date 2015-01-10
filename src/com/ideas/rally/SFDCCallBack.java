@@ -1,19 +1,15 @@
 package com.ideas.rally;
 
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 
 import java.util.Calendar;
 import java.util.List;
 
-/**
- * Created by idnasr on 1/5/2015.
- */
 public abstract class SFDCCallBack {
 
-        public abstract void procesResult(JsonArray jsonArray, List<String> input, List<String> output) throws Exception;
+        public abstract void processResult(JsonArray jsonArray, List<String> input, List<String> output) throws Exception;
 
         protected String getReferenceName(JsonObject json, String name) {
             if (json.get(name) instanceof JsonNull)

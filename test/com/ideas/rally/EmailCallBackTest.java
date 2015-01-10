@@ -14,9 +14,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by idnasr on 1/9/2015.
- */
 public class EmailCallBackTest {
     @BeforeClass
     public static void beforeClass() throws Exception {
@@ -28,6 +25,7 @@ public class EmailCallBackTest {
     public void before() throws Exception{
         RallyConfiguration.getConnection().createStatement().execute("delete from user");
     }
+
     @Test
     public void processResult() throws Exception {
         String userName="testName";
@@ -35,7 +33,7 @@ public class EmailCallBackTest {
         List<String> input = new ArrayList<String>();
         input.add(userName);
         List<String> output = new ArrayList<String>();
-        callBack.procesResult(getIterationArray("user.name@company.com"),input,output);
+        callBack.processResult(getIterationArray("user.name@company.com"), input, output);
 
         Connection con = RallyConfiguration.getConnection();
         Statement stmt = con.createStatement();
@@ -44,7 +42,7 @@ public class EmailCallBackTest {
         Assert.assertEquals(":" + userName + ":", ":" + rs.getString(1) + ":");
         Assert.assertEquals("user.name@company.com",rs.getString(2));
 
-        callBack.procesResult(getIterationArray("user.name@change.com"),input,output);
+        callBack.processResult(getIterationArray("user.name@change.com"), input, output);
 
         rs = stmt.executeQuery("select userName,email from user where userName='" + userName + "'");
         rs.next();
@@ -58,6 +56,7 @@ public class EmailCallBackTest {
         EmailCallBack  callBack = new EmailCallBack();
         Assert.assertEquals("email@email.com",callBack.getUserEmailAddress("owner"));
     }
+
     private JsonArray getIterationArray(String email){
         JsonArray jsonArray = new JsonArray();
         jsonArray.add(getEmail(email));
@@ -66,10 +65,7 @@ public class EmailCallBackTest {
 
     private JsonElement getEmail(String email)
     {
-        String jsonStr =
-                "{"+
-                    " \"EmailAddress\":\""+email+"\" "+
-                "}";
+        String jsonStr = "{ \"EmailAddress\":\""+email+"\" }";
         Gson gson = new Gson();
         return gson.fromJson (jsonStr, JsonElement.class);
     }

@@ -12,12 +12,9 @@ import java.util.Map;
 
 import static com.ideas.rally.SQLExecutor.executeUpdate;
 
-/**
- * Created by idnasr on 1/8/2015.
- */
 public class TaskCallBack extends SFDCCallBack{
     @Override
-    public void procesResult(JsonArray jsonArray, List<String> input, List<String> output) throws Exception {
+    public void processResult(JsonArray jsonArray, List<String> input, List<String> output) throws Exception {
         for (JsonElement jsonElement : jsonArray) {
             JsonObject json = jsonElement.getAsJsonObject();
             String emailAddress = new EmailCallBack().getUserEmailAddress(getReferenceName(json, "Owner"));
@@ -29,8 +26,6 @@ public class TaskCallBack extends SFDCCallBack{
             }
         }
     }
-
-
 
     private void insertIntoTaskHistory(String iteration, String taskNumber, String taskOwner, float actual, float todo, String state) throws Exception {
         Map<String,String> input = new HashMap<String, String>();
@@ -53,9 +48,9 @@ public class TaskCallBack extends SFDCCallBack{
     private void updateTaskHistory(final String iteration, final String taskNumber, final String taskOwner, final Map<String, String> input) throws Exception {
         String query="select iteration,taskNumber,taskOwner,actuals,toDo,state,taskChanged from taskHistory where iteration='" + iteration + "' and taskNumber='" + taskNumber + "' and taskOwner='" + taskOwner + "'";
 
-        SQLExecutor SQLExecutor = new SQLExecutor(input,query) {
+        SQLExecutor SQLExecutor = new SQLExecutor(query) {
             @Override
-            public void accept(ResultSet rs,Map<String,String> input) throws Exception {
+            public void accept(ResultSet rs) throws Exception {
                     StringBuilder buffer = new StringBuilder();
                     buffer.append("update taskHistory ");
                     buffer.append("set ");

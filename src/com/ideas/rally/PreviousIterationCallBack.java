@@ -5,16 +5,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
-/**
- * Created by idnasr on 1/8/2015.
- */
 public class PreviousIterationCallBack extends SFDCCallBack{
     @Override
-    public void procesResult(JsonArray jsonArray, List<String> input, List<String> output) throws Exception {
+    public void processResult(JsonArray jsonArray, List<String> input, List<String> output) throws Exception {
         List<String> iterationList = new ArrayList<String>();
         for (JsonElement jsonElement : jsonArray) {
             JsonObject json = jsonElement.getAsJsonObject();

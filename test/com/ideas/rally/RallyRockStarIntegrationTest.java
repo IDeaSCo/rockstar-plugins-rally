@@ -1,6 +1,5 @@
 package com.ideas.rally;
 
-import com.ideas.rally.RallyConfiguration;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -13,11 +12,13 @@ import static org.junit.Assert.assertEquals;
 public class RallyRockStarIntegrationTest {
     private static int stars = 10;
     private final Iteration iteration = new Iteration("2014-12-22", Collections.<String>emptyList());
+
     @BeforeClass
     public static void beforeClass() throws Exception {
         RallyConfiguration.testRun=true;
         RallyConfiguration.createSchema();
     }
+
     @Test
     public void noPointsWhenStorySpillsOver() throws Exception {
         int bonus = iteration.getBonusStarsForAcceptingTheStory(stars, "2014-12-22", 1);
@@ -40,6 +41,4 @@ public class RallyRockStarIntegrationTest {
             assertEquals(stars + entry.getValue(), bonus);
         }
     }
-
-
 }

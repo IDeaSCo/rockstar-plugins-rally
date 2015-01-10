@@ -1,8 +1,6 @@
 package com.ideas.rally;
 
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.rallydev.rest.RallyRestApi;
 import com.rallydev.rest.request.QueryRequest;
 import com.rallydev.rest.response.QueryResponse;
@@ -11,9 +9,6 @@ import com.rallydev.rest.util.QueryFilter;
 
 import java.util.List;
 
-/**
- * Created by idnasr on 1/5/2015.
- */
 public class SFDCExecutor {
     String queryRequest;
     Fetch fetch;
@@ -45,7 +40,7 @@ public class SFDCExecutor {
             pageCount++;
             workSpaceResponse = restApi.query(workSpaceRequest);
             JsonArray array = workSpaceResponse.getResults();
-            callBack.procesResult(array,input,output);
+            callBack.processResult(array, input, output);
 
         } while (workSpaceResponse.getTotalResultCount() > pageCount * 200);
     }

@@ -14,9 +14,6 @@ import java.util.List;
 
 import static com.ideas.rally.SQLExecutor.executeUpdate;
 
-/**
- * Created by idnasr on 1/9/2015.
- */
 public class TaskCallBackTest {
     @BeforeClass
     public static void beforeClass() throws Exception {
@@ -32,12 +29,12 @@ public class TaskCallBackTest {
     }
 
     @Test
-    public void procesResult_insert() throws Exception {
+    public void processResult_insert() throws Exception {
         TaskCallBack callBack = new TaskCallBack();
         List<String> input = new ArrayList<String>();
         input.add("Iteration 1");
         List<String> output = new ArrayList<String>();
-        callBack.procesResult(getTaskArray(),input,output);
+        callBack.processResult(getTaskArray(), input, output);
 
         ResultSet rs = RallyConfiguration.getConnection().createStatement().executeQuery("select iteration,taskNumber,taskOwner,actuals,toDo, state, taskChanged from taskHistory");
         rs.next();
@@ -52,21 +49,20 @@ public class TaskCallBackTest {
     }
 
     @Test
-         public void procesResult_update_task_not_changed() throws Exception {
+         public void processResult_update_task_not_changed() throws Exception {
 //Given:
         StringBuilder buffer = new StringBuilder()
                 .append(" insert into taskHistory(iteration,taskNumber,taskOwner,actuals,toDo,state,taskChanged) ")
                 .append(" values ('Iteration 1','TA007','email@email.com',10.3,5.1,'Defined',1) ");
 
-        int result[] =  executeUpdate(buffer.toString());
-
+        executeUpdate(buffer.toString());
 
 //When:
         TaskCallBack callBack = new TaskCallBack();
         List<String> input = new ArrayList<String>();
         input.add("Iteration 1");
         List<String> output = new ArrayList<String>();
-        callBack.procesResult(getTaskArray(),input,output);
+        callBack.processResult(getTaskArray(), input, output);
 
 //Then:
         ResultSet rs = RallyConfiguration.getConnection().createStatement().executeQuery("select iteration,taskNumber,taskOwner,actuals,toDo, state, taskChanged from taskHistory");
@@ -82,21 +78,20 @@ public class TaskCallBackTest {
 
 
     @Test
-    public void procesResult_update_task_changed_because_of_change_in_actual() throws Exception {
+    public void processResult_update_task_changed_because_of_change_in_actual() throws Exception {
 //Given:
         StringBuilder buffer = new StringBuilder()
                 .append(" insert into taskHistory(iteration,taskNumber,taskOwner,actuals,toDo,state,taskChanged) ")
                 .append(" values ('Iteration 1','TA007','email@email.com',10.6,5.1,'Defined',1) ");
 
-        int result[] =  executeUpdate(buffer.toString());
-
+        executeUpdate(buffer.toString());
 
 //When:
         TaskCallBack callBack = new TaskCallBack();
         List<String> input = new ArrayList<String>();
         input.add("Iteration 1");
         List<String> output = new ArrayList<String>();
-        callBack.procesResult(getTaskArray(),input,output);
+        callBack.processResult(getTaskArray(), input, output);
 
 //Then:
         ResultSet rs = RallyConfiguration.getConnection().createStatement().executeQuery("select iteration,taskNumber,taskOwner,actuals,toDo, state, taskChanged from taskHistory");
@@ -111,21 +106,19 @@ public class TaskCallBackTest {
     }
 
     @Test
-    public void procesResult_update_task_changed_because_of_change_in_todo() throws Exception {
+    public void processResult_update_task_changed_because_of_change_in_todo() throws Exception {
 //Given:
         StringBuilder buffer = new StringBuilder()
                 .append(" insert into taskHistory(iteration,taskNumber,taskOwner,actuals,toDo,state,taskChanged) ")
                 .append(" values ('Iteration 1','TA007','email@email.com',10.3,4.1,'Defined',1) ");
 
-        int result[] =  executeUpdate(buffer.toString());
-
-
+        executeUpdate(buffer.toString());
 //When:
         TaskCallBack callBack = new TaskCallBack();
         List<String> input = new ArrayList<String>();
         input.add("Iteration 1");
         List<String> output = new ArrayList<String>();
-        callBack.procesResult(getTaskArray(),input,output);
+        callBack.processResult(getTaskArray(), input, output);
 
 //Then:
         ResultSet rs = RallyConfiguration.getConnection().createStatement().executeQuery("select iteration,taskNumber,taskOwner,actuals,toDo, state, taskChanged from taskHistory");
@@ -139,13 +132,13 @@ public class TaskCallBackTest {
         Assert.assertEquals("1",rs.getString(7));
     }
     @Test
-    public void procesResult_update_task_changed_because_of_change_in_state() throws Exception {
+    public void processResult_update_task_changed_because_of_change_in_state() throws Exception {
 //Given:
         StringBuilder buffer = new StringBuilder()
                 .append(" insert into taskHistory(iteration,taskNumber,taskOwner,actuals,toDo,state,taskChanged) ")
                 .append(" values ('Iteration 1','TA007','email@email.com',10.3,5.1,'In-Progress',1) ");
 
-        int result[] =  executeUpdate(buffer.toString());
+        executeUpdate(buffer.toString());
 
 
 //When:
@@ -153,7 +146,7 @@ public class TaskCallBackTest {
         List<String> input = new ArrayList<String>();
         input.add("Iteration 1");
         List<String> output = new ArrayList<String>();
-        callBack.procesResult(getTaskArray(),input,output);
+        callBack.processResult(getTaskArray(), input, output);
 
 //Then:
         ResultSet rs = RallyConfiguration.getConnection().createStatement().executeQuery("select iteration,taskNumber,taskOwner,actuals,toDo, state, taskChanged from taskHistory");

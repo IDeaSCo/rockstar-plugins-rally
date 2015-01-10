@@ -3,7 +3,9 @@ package com.ideas.rally;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
 
 public class RallyRockStarIntegration {
     static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");

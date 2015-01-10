@@ -22,7 +22,7 @@ public class IterationCallBackTest{
         List input = new ArrayList();
         input.add("2014-01-12");
         List output = new ArrayList();
-        callBack.procesResult(getIterationArray(),input,output);
+        callBack.processResult(getIterationArray(), input, output);
         Assert.assertEquals("Iteration 2",output.get(0));
     }
 
@@ -32,7 +32,7 @@ public class IterationCallBackTest{
         List input = new ArrayList();
         input.add("2014-01-30");
         List output = new ArrayList();
-        callBack.procesResult(getIterationArray(),input,output);
+        callBack.processResult(getIterationArray(), input, output);
         Assert.assertEquals(0,output.size());
     }
 
