@@ -5,7 +5,6 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 public abstract class SQLExecutor {
-    public static final int NO_ROWS_INSERTED=0;
     private final String query;
 
     public String result;

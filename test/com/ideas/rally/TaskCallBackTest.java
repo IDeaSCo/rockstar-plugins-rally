@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.ideas.rally.SQLExecutor.executeUpdate;
+import static java.util.Arrays.asList;
 
 public class TaskCallBackTest {
     @BeforeClass
@@ -23,18 +24,16 @@ public class TaskCallBackTest {
 
     @Before
     public void before() throws Exception{
-        RallyConfiguration.getConnection().createStatement().execute("delete from taskHistory");
-        RallyConfiguration.getConnection().createStatement().execute("delete from user");
-        RallyConfiguration.getConnection().createStatement().execute("insert into user(userName,email) values('owner','email@email.com')");
+        executeUpdate("delete from taskHistory");
+        executeUpdate("delete from user");
+        executeUpdate("insert into user(userName,email) values('owner','email@email.com')");
     }
 
     @Test
     public void processResult_insert() throws Exception {
         TaskCallBack callBack = new TaskCallBack();
-        List<String> input = new ArrayList<String>();
-        input.add("Iteration 1");
-        List<String> output = new ArrayList<String>();
-        callBack.processResult(getTaskArray(), input, output);
+        List<String> input = asList("Iteration 1");
+        callBack.processResult(getTaskArray(), input, new ArrayList<String>());
 
         ResultSet rs = RallyConfiguration.getConnection().createStatement().executeQuery("select iteration,taskNumber,taskOwner,actuals,toDo, state, taskChanged from taskHistory");
         rs.next();
@@ -51,18 +50,14 @@ public class TaskCallBackTest {
     @Test
          public void processResult_update_task_not_changed() throws Exception {
 //Given:
-        StringBuilder buffer = new StringBuilder()
-                .append(" insert into taskHistory(iteration,taskNumber,taskOwner,actuals,toDo,state,taskChanged) ")
-                .append(" values ('Iteration 1','TA007','email@email.com',10.3,5.1,'Defined',1) ");
 
-        executeUpdate(buffer.toString());
+        executeUpdate(" insert into taskHistory(iteration,taskNumber,taskOwner,actuals,toDo,state,taskChanged) "
+                + " values ('Iteration 1','TA007','email@email.com',10.3,5.1,'Defined',1) ");
 
 //When:
         TaskCallBack callBack = new TaskCallBack();
-        List<String> input = new ArrayList<String>();
-        input.add("Iteration 1");
-        List<String> output = new ArrayList<String>();
-        callBack.processResult(getTaskArray(), input, output);
+        List<String> input = asList("Iteration 1");
+        callBack.processResult(getTaskArray(), input, new ArrayList<String>());
 
 //Then:
         ResultSet rs = RallyConfiguration.getConnection().createStatement().executeQuery("select iteration,taskNumber,taskOwner,actuals,toDo, state, taskChanged from taskHistory");
@@ -80,18 +75,14 @@ public class TaskCallBackTest {
     @Test
     public void processResult_update_task_changed_because_of_change_in_actual() throws Exception {
 //Given:
-        StringBuilder buffer = new StringBuilder()
-                .append(" insert into taskHistory(iteration,taskNumber,taskOwner,actuals,toDo,state,taskChanged) ")
-                .append(" values ('Iteration 1','TA007','email@email.com',10.6,5.1,'Defined',1) ");
 
-        executeUpdate(buffer.toString());
+        executeUpdate(" insert into taskHistory(iteration,taskNumber,taskOwner,actuals,toDo,state,taskChanged) "
+                + " values ('Iteration 1','TA007','email@email.com',10.6,5.1,'Defined',1) ");
 
 //When:
         TaskCallBack callBack = new TaskCallBack();
-        List<String> input = new ArrayList<String>();
-        input.add("Iteration 1");
-        List<String> output = new ArrayList<String>();
-        callBack.processResult(getTaskArray(), input, output);
+        List<String> input = asList("Iteration 1");
+        callBack.processResult(getTaskArray(), input, new ArrayList<String>());
 
 //Then:
         ResultSet rs = RallyConfiguration.getConnection().createStatement().executeQuery("select iteration,taskNumber,taskOwner,actuals,toDo, state, taskChanged from taskHistory");
@@ -108,17 +99,13 @@ public class TaskCallBackTest {
     @Test
     public void processResult_update_task_changed_because_of_change_in_todo() throws Exception {
 //Given:
-        StringBuilder buffer = new StringBuilder()
-                .append(" insert into taskHistory(iteration,taskNumber,taskOwner,actuals,toDo,state,taskChanged) ")
-                .append(" values ('Iteration 1','TA007','email@email.com',10.3,4.1,'Defined',1) ");
 
-        executeUpdate(buffer.toString());
+        executeUpdate(" insert into taskHistory(iteration,taskNumber,taskOwner,actuals,toDo,state,taskChanged) "
+                + " values ('Iteration 1','TA007','email@email.com',10.3,4.1,'Defined',1) ");
 //When:
         TaskCallBack callBack = new TaskCallBack();
-        List<String> input = new ArrayList<String>();
-        input.add("Iteration 1");
-        List<String> output = new ArrayList<String>();
-        callBack.processResult(getTaskArray(), input, output);
+        List<String> input = asList("Iteration 1");
+        callBack.processResult(getTaskArray(), input, new ArrayList<String>());
 
 //Then:
         ResultSet rs = RallyConfiguration.getConnection().createStatement().executeQuery("select iteration,taskNumber,taskOwner,actuals,toDo, state, taskChanged from taskHistory");
@@ -134,19 +121,15 @@ public class TaskCallBackTest {
     @Test
     public void processResult_update_task_changed_because_of_change_in_state() throws Exception {
 //Given:
-        StringBuilder buffer = new StringBuilder()
-                .append(" insert into taskHistory(iteration,taskNumber,taskOwner,actuals,toDo,state,taskChanged) ")
-                .append(" values ('Iteration 1','TA007','email@email.com',10.3,5.1,'In-Progress',1) ");
 
-        executeUpdate(buffer.toString());
+        executeUpdate(" insert into taskHistory(iteration,taskNumber,taskOwner,actuals,toDo,state,taskChanged) "
+                + " values ('Iteration 1','TA007','email@email.com',10.3,5.1,'In-Progress',1) ");
 
 
 //When:
         TaskCallBack callBack = new TaskCallBack();
-        List<String> input = new ArrayList<String>();
-        input.add("Iteration 1");
-        List<String> output = new ArrayList<String>();
-        callBack.processResult(getTaskArray(), input, output);
+        List<String> input = asList("Iteration 1");
+        callBack.processResult(getTaskArray(), input, new ArrayList<String>());
 
 //Then:
         ResultSet rs = RallyConfiguration.getConnection().createStatement().executeQuery("select iteration,taskNumber,taskOwner,actuals,toDo, state, taskChanged from taskHistory");

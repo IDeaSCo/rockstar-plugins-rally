@@ -10,12 +10,12 @@ import com.rallydev.rest.util.QueryFilter;
 import java.util.List;
 
 public class SFDCExecutor {
-    String queryRequest;
-    Fetch fetch;
-    QueryFilter queryFilter;
-    SFDCCallBack callBack;
-    List<String> input;
-    List<String> output;
+    private final String queryRequest;
+    private final Fetch fetch;
+    private final QueryFilter queryFilter;
+    private final SFDCCallBack callBack;
+    private final List<String> input;
+    private final List<String> output;
 
     public SFDCExecutor(String queryRequest,Fetch fetch,QueryFilter queryFilter, SFDCCallBack callBack, List<String> input, List<String> output){
         this.queryRequest=queryRequest;

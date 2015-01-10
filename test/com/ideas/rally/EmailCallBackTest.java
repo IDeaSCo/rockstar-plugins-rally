@@ -3,16 +3,17 @@ package com.ideas.rally;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.ideas.rally.SQLExecutor.executeUpdate;
+import static java.util.Arrays.asList;
+import static org.junit.Assert.assertEquals;
 
 public class EmailCallBackTest {
     @BeforeClass
@@ -23,41 +24,46 @@ public class EmailCallBackTest {
 
     @Before
     public void before() throws Exception{
-        RallyConfiguration.getConnection().createStatement().execute("delete from user");
+        executeUpdate("delete from user");
     }
 
     @Test
     public void processResult() throws Exception {
-        String userName="testName";
+        final String userName="testName";
+        final String email = "user.name@company.com";
+        String updatedEmailed = "user.name@change.com";
+
         EmailCallBack  callBack = new EmailCallBack();
-        List<String> input = new ArrayList<String>();
-        input.add(userName);
+        List<String> input = asList(userName);
         List<String> output = new ArrayList<String>();
-        callBack.processResult(getIterationArray("user.name@company.com"), input, output);
 
-        Connection con = RallyConfiguration.getConnection();
-        Statement stmt = con.createStatement();
-        ResultSet rs =  stmt.executeQuery("select userName,email from user where userName='" + userName + "'");
-        rs.next();
-        Assert.assertEquals(":" + userName + ":", ":" + rs.getString(1) + ":");
-        Assert.assertEquals("user.name@company.com",rs.getString(2));
+        callBack.processResult(asJsonArray(email), input, output);
+        assertValuesInDBMatch(userName, email);
 
-        callBack.processResult(getIterationArray("user.name@change.com"), input, output);
-
-        rs = stmt.executeQuery("select userName,email from user where userName='" + userName + "'");
-        rs.next();
-        Assert.assertEquals(":" + userName + ":", ":" + rs.getString(1) + ":");
-        Assert.assertEquals("user.name@change.com",rs.getString(2));
+        callBack.processResult(asJsonArray(updatedEmailed), input, output);
+        assertValuesInDBMatch(userName, updatedEmailed);
     }
 
     @Test
     public void getUserEmailAddress() throws Exception {
-        RallyConfiguration.getConnection().createStatement().execute("insert into user(userName,email) values('owner','email@email.com')");
+        String email = "email@email.com";
+        executeUpdate("insert into user(userName,email) values('owner','" + email + "')");
         EmailCallBack  callBack = new EmailCallBack();
-        Assert.assertEquals("email@email.com",callBack.getUserEmailAddress("owner"));
+        assertEquals(email, callBack.getUserEmailAddress("owner"));
     }
 
-    private JsonArray getIterationArray(String email){
+    private void assertValuesInDBMatch(final String userName, final String email) throws Exception {
+        String query = "select userName, email from user where userName='" + userName + "'";
+        new SQLExecutor(query) {
+            @Override
+            public void accept(ResultSet rs) throws Exception {
+                assertEquals(userName, rs.getString(1));
+                assertEquals(email, rs.getString(2));
+            }
+        }.go();
+    }
+
+    private JsonArray asJsonArray(String email){
         JsonArray jsonArray = new JsonArray();
         jsonArray.add(getEmail(email));
         return jsonArray;
