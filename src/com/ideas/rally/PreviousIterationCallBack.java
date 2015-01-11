@@ -36,6 +36,4 @@ public class PreviousIterationCallBack extends SFDCCallBack{
     private String tail(List<String> list) {
         return list.get(list.size() - 1);
     }
-
 }
-

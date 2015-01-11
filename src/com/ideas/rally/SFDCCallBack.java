@@ -8,7 +8,6 @@ import java.util.Calendar;
 import java.util.List;
 
 public abstract class SFDCCallBack {
-
         public abstract List<String> processResult(final JsonArray jsonArray, final String... input) throws Exception;
 
         protected String getReferenceName(JsonObject json, String name) {
@@ -17,7 +16,6 @@ public abstract class SFDCCallBack {
             JsonObject owner = json.get(name).getAsJsonObject();
             return owner.get("_refObjectName").getAsString();
         }
-
 
         protected String subtractOneDay(String date) throws Exception {
             Calendar calendar = Calendar.getInstance();
@@ -32,6 +30,5 @@ public abstract class SFDCCallBack {
             }
             return json.get(value).getAsFloat();
         }
-
 }
 
