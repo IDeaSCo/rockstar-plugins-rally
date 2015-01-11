@@ -52,9 +52,5 @@ public class EmailCallBack extends SFDCCallBack{
         SQLExecutor.go();
         return SQLExecutor.result;
     }
-
-
-
-
 }
 
