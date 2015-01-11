@@ -16,22 +16,21 @@ import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 
 public class TaskCallBackTest {
+    private final static JsonArray taskArray = getTaskArray();
     private final TaskCallBack callBack = new TaskCallBack();
-    private final JsonArray taskArray = getTaskArray();
     private final String iterationName = "Iteration 1";
     private final List<String> iteration1 = asList(iterationName);
-    private final String id = "TA007";
+    private static final String id = "TA007";
     private static final String email = "email@email.com";
-    private static final String formattedEmail = "'" + email + "'";
-    private final String actuals = "10.3";
-    private final String toDo = "5.1";
-    private final String definedStatus = "Defined";
+    private static final String actuals = "10.3";
+    private static final String toDo = "5.1";
+    private static final String definedStatus = "Defined";
 
     @BeforeClass
     public static void setUpDB() throws Exception {
         RallyConfiguration.testRun = true;
         RallyConfiguration.createSchema();
-        executeUpdate("insert into user(userName,email) values('owner'," + formattedEmail + ")");
+        executeUpdate("insert into user(userName,email) values('owner','" + email + "')");
     }
 
     @Before
@@ -74,13 +73,13 @@ public class TaskCallBackTest {
         assertTaskChangedStatusIs("1");
     }
 
-    private JsonArray getTaskArray() {
+    private static JsonArray getTaskArray() {
         JsonArray jsonArray = new JsonArray();
         jsonArray.add(getTask("owner", id, actuals, toDo, definedStatus));
         return jsonArray;
     }
 
-    private JsonElement getTask(String owner, String formattedID, String actuals, String toDo, String state) {
+    private static JsonElement getTask(String owner, String formattedID, String actuals, String toDo, String state) {
         String jsonStr =
                 "{" +
                         " \"Owner\":{ \"_refObjectName\":\"" + owner + "\"}, " +
@@ -96,18 +95,15 @@ public class TaskCallBackTest {
         new SQLExecutor("select iteration,taskNumber,taskOwner,actuals,toDo, state, taskChanged from taskHistory"){
             @Override
             public void accept(ResultSet rs) throws Exception {
-                assertEquals(iterationName, rs.getString(1));
-                assertEquals(id, rs.getString(2));
-                assertEquals(email, rs.getString(3));
-                assertEquals(actuals, rs.getString(4));
-                assertEquals(toDo, rs.getString(5));
-                assertEquals(definedStatus, rs.getString(6));
-                assertEquals(taskChangedStatus, rs.getString(7));
+                List<String> expected = asList(iterationName, id, email, actuals, toDo, definedStatus, taskChangedStatus);
+                for (int i = 0; i < expected.size(); i++) {
+                    assertEquals(expected.get(i), rs.getString(i+1));
+                }
             }
         }.go();
     }
 
     private void insetIntoTaskHistory(String actuals, String toDo, String definedStatus) throws Exception {
-        executeUpdate("insert into taskHistory values ('" + iterationName + "','" + id + "'," + formattedEmail + "," + actuals + "," + toDo + ",'" + definedStatus + "',1)");
+        executeUpdate("insert into taskHistory values ('" + iterationName + "','" + id + "','" + email + "'," + actuals + "," + toDo + ",'" + definedStatus + "',1)");
     }
 }
