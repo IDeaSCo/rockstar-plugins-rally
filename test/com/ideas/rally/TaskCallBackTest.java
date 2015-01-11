@@ -16,15 +16,15 @@ import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 
 public class TaskCallBackTest {
-    private final static JsonArray taskArray = getTaskArray();
-    private final TaskCallBack callBack = new TaskCallBack();
-    private final String iterationName = "Iteration 1";
-    private final List<String> iteration1 = asList(iterationName);
+    private static final JsonArray taskArray = getTaskArray();
+    private static final String iterationName = "Iteration 1";
+    private static final List<String> iteration1 = asList(iterationName);
     private static final String id = "TA007";
     private static final String email = "email@email.com";
     private static final String actuals = "10.3";
     private static final String toDo = "5.1";
     private static final String definedStatus = "Defined";
+    private final TaskCallBack callBack = new TaskCallBack();
 
     @BeforeClass
     public static void setUpDB() throws Exception {
@@ -39,13 +39,13 @@ public class TaskCallBackTest {
     }
 
     @Test
-    public void processResult_insert() throws Exception {
+    public void newTasksHaveChangedStatus() throws Exception {
         callBack.processResult(taskArray, iteration1, new ArrayList<String>());
         assertTaskChangedStatusIs("1");
     }
 
     @Test
-    public void processResult_update_task_not_changed() throws Exception {
+    public void tasksUpdatedWithSameDataDoNotHaveChangedStatus() throws Exception {
         insetIntoTaskHistory(actuals, toDo, definedStatus);
         callBack.processResult(taskArray, iteration1, new ArrayList<String>());
         assertTaskChangedStatusIs("0");
@@ -53,21 +53,21 @@ public class TaskCallBackTest {
 
 
     @Test
-    public void processResult_update_task_changed_because_of_change_in_actual() throws Exception {
+    public void whenActualsAreUpdatedOnTheTaskItHasChangedStatus() throws Exception {
         insetIntoTaskHistory("10.6", toDo, definedStatus);
         callBack.processResult(taskArray, iteration1, new ArrayList<String>());
         assertTaskChangedStatusIs("1");
     }
 
     @Test
-    public void processResult_update_task_changed_because_of_change_in_todo() throws Exception {
+    public void whenToDoIsUpdatedOnTheTaskItHasChangedStatus() throws Exception {
         insetIntoTaskHistory(actuals, "4.1", definedStatus);
         callBack.processResult(taskArray, iteration1, new ArrayList<String>());
         assertTaskChangedStatusIs("1");
     }
 
     @Test
-    public void processResult_update_task_changed_because_of_change_in_state() throws Exception {
+    public void whenStateIsUpdatedOnTheTaskItHasChangedStatus() throws Exception {
         insetIntoTaskHistory(actuals, toDo, "In-Progress");
         callBack.processResult(taskArray, iteration1, new ArrayList<String>());
         assertTaskChangedStatusIs("1");
