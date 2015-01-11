@@ -27,16 +27,55 @@ public class Iteration {
         this.holidays = holidays;
     }
 
-    private String getIteration(String date) throws Exception {
-        Fetch fetchList = new Fetch("Name","StartDate", "EndDate" );
-        QueryFilter queryFilter = new QueryFilter("Project", "=", RallyConfiguration.RALLY_PROJECT);
-        SFDCExecutor executor = new SFDCExecutor("Iteration",fetchList,queryFilter,new IterationCallBack(),date);
-        List<String> output = executor.execute();
+    public void execute() throws Exception {
+        if (!RallyConfiguration.post(RallyConfiguration.postEmail, 0, "Test Connection", "Default"))
+            throw new RuntimeException("Cannot connect to the Rock Star App");
+
+        String iteration = getIterationName(currentDate, new CurrentIteration());
+        String previousIteration = getIterationName(currentDate, new LastIteration());
+        System.out.println("Got iteration as:" + iteration + " for yesterday:" + currentDate);
+
+        if (iteration == null) return;
+
+        getTasks(iteration);
+        cleanUpDeletedTasks(iteration);
+
+        getStories(iteration, "HierarchicalRequirement");
+        getStories(iteration, "Defect");
+        cleanUpDeletedStoriesDefects(iteration);
+        updateStatusOfUnacceptedStoriesInPreviousIteration(previousIteration);
+
+        RallyConfiguration.optimizeTables();
+
+        updateStarForNotUpdatingStoryPlannedEstimates(iteration);
+        updateStarForUpdatingStoryPlannedEstimates(iteration);
+        updateStarForSpillingOverStory();
+
+        updateStarForGettingStoryAcceptedInIteration(iteration, currentDate);
+        updateStarForCompletingStoryInIteration(iteration);
+        updateStarForNotTaskingStory(iteration);
+
+        updateStarForLeavingStoryInPriorIterationsWhichIsNotAccepted(previousIteration);
+        updateStarForNotUpdatingRally(iteration);
+        updateStarForUpdatingRally(iteration);
+    }
+
+    private String getIterationName(String date, IterationType iterationType) throws Exception {
+        List<String> output = fetchIterationDetails(date, iterationType);
         if(output.size() > 0) {
-            populateWorkingDaysSinceStartOfIteration(output.get(1), date);
+            if(iterationType.populateWorkingDays())
+                populateWorkingDaysSinceStartOfIteration(output.get(1), date);
             return output.get(0);
         }
         return null;
+    }
+
+    private List<String> fetchIterationDetails(String date, IterationType iterationType) throws Exception {
+        Fetch fetchList = new Fetch("Name","StartDate", "EndDate" );
+        QueryFilter queryFilter = new QueryFilter("Project", "=", RallyConfiguration.RALLY_PROJECT);
+        SFDCCallBack callBack = new IterationCallBack(iterationType);
+        SFDCExecutor executor = new SFDCExecutor("Iteration",fetchList,queryFilter, callBack,date);
+        return executor.execute();
     }
 
     protected void populateWorkingDaysSinceStartOfIteration(String startDate, String endDate) throws Exception {
@@ -50,17 +89,6 @@ public class Iteration {
             }
             startCalDate.add(Calendar.DATE, 1);
         }
-    }
-
-    private String getPreviousIteration(String date) throws Exception {
-        Fetch fetchList = new Fetch("Name","StartDate", "EndDate" );
-        QueryFilter queryFilter = new QueryFilter("Project", "=", RallyConfiguration.RALLY_PROJECT);
-        SFDCExecutor executor = new SFDCExecutor("Iteration",fetchList,queryFilter,new PreviousIterationCallBack(),date);
-        List<String> output = executor.execute();
-        if(output.size() > 0) {
-          return  output.get(0);
-        }
-        return null;
     }
 
     private void getTasks(String iteration) throws Exception {
@@ -178,39 +206,6 @@ public class Iteration {
 
     private void insertIntoStoryUsers(String storyNumber, String emailAddress) throws Exception {
         executeUpdate("insert into storyUsers(storyNumber,storyTaskOwner) " + " values ('" + storyNumber + "','" + emailAddress + "') " + " on duplicate key update " + " storyTaskOwner=VALUES(storyTaskOwner) ");
-    }
-
-    public void execute() throws Exception {
-        if (!RallyConfiguration.post(RallyConfiguration.postEmail, 0, "Test Connection", "Default"))
-            throw new RuntimeException("Cannot connect to the Rock Star App");
-
-        String iteration = getIteration(currentDate);
-        String previousIteration = getPreviousIteration(currentDate);
-        System.out.println("Got iteration as:" + iteration + " for yesterday:" + currentDate);
-
-        if (iteration == null || iteration.equals("null")) return;
-
-        getTasks(iteration);
-        cleanUpDeletedTasks(iteration);
-
-        getStories(iteration, "HierarchicalRequirement");
-        getStories(iteration, "Defect");
-        cleanUpDeletedStoriesDefects(iteration);
-        updateStatusOfUnacceptedStoriesInPreviousIteration(previousIteration);
-
-        RallyConfiguration.optimizeTables();
-
-        updateStarForNotUpdatingStoryPlannedEstimates(iteration);
-        updateStarForUpdatingStoryPlannedEstimates(iteration);
-        updateStarForSpillingOverStory();
-
-        updateStarForGettingStoryAcceptedInIteration(iteration, currentDate);
-        updateStarForCompletingStoryInIteration(iteration);
-        updateStarForNotTaskingStory(iteration);
-
-        updateStarForLeavingStoryInPriorIterationsWhichIsNotAccepted(previousIteration);
-        updateStarForNotUpdatingRally(iteration);
-        updateStarForUpdatingRally(iteration);
     }
 
     private void updateStatusOfUnacceptedStoriesInPreviousIteration(final String previousIteration) throws Exception {
