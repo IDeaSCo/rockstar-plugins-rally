@@ -13,13 +13,13 @@ public class IterationCallBackTest extends IterationTestCase {
 
     @Test
     public void retrieveMatchingIterationNameAndStartDate() throws Exception {
-        List<String> output = callBack.processResult(iterations, asList("2014-01-12"));
+        List<String> output = callBack.processResult(iterations, "2014-01-12");
         assertEquals(asList("Iteration 2", "2014-01-11"), output);
     }
 
     @Test
     public void givenDateCannotBeOnTheLastDayOfTheIteration() throws Exception {
-        List<String> output = callBack.processResult(iterations, asList("2014-01-30"));
+        List<String> output = callBack.processResult(iterations, "2014-01-30");
         assertTrue(output.isEmpty());
     }
 }

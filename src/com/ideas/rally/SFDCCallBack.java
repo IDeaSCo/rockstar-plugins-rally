@@ -9,7 +9,7 @@ import java.util.List;
 
 public abstract class SFDCCallBack {
 
-        public abstract List<String> processResult(final JsonArray jsonArray, final List<String> input) throws Exception;
+        public abstract List<String> processResult(final JsonArray jsonArray, final String... input) throws Exception;
 
         protected String getReferenceName(JsonObject json, String name) {
             if (json.get(name) instanceof JsonNull)

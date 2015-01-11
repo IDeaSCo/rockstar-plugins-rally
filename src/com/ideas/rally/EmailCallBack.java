@@ -14,13 +14,13 @@ import static com.ideas.rally.SQLExecutor.executeUpdate;
 
 public class EmailCallBack extends SFDCCallBack{
     @Override
-    public List<String>  processResult(JsonArray jsonArray, List<String> input) throws Exception {
+    public List<String>  processResult(JsonArray jsonArray, String... input) throws Exception {
         List<String> output = new ArrayList<String>();
         for (JsonElement jsonElement : jsonArray) {
             JsonObject json = jsonElement.getAsJsonObject();
             String email = json.get("EmailAddress").getAsString();
             output.add(email);
-            updateOrInsertUserEmail(input.get(0), email);
+            updateOrInsertUserEmail(input[0], email);
         }
         return output;
     }
@@ -35,12 +35,9 @@ public class EmailCallBack extends SFDCCallBack{
         String email = getEmailFromDB(owner);
         if(email == null) {
             Fetch fetch = new Fetch("EmailAddress");
-            List<String> input = new ArrayList<String>();
-            input.add(owner);
-            List<String> output = new ArrayList<String>();
             QueryFilter queryFilter = new QueryFilter("DisplayName", "=", owner);
-            SFDCExecutor executor = new SFDCExecutor("User", fetch, queryFilter, new EmailCallBack() , input);
-            return output.get(0);
+            SFDCExecutor executor = new SFDCExecutor("User", fetch, queryFilter, new EmailCallBack() , owner);
+            return executor.execute().get(0);
         }
         return email;
     }

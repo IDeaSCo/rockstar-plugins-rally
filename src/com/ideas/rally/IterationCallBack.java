@@ -9,14 +9,14 @@ import java.util.List;
 
 public class IterationCallBack extends SFDCCallBack{
     @Override
-    public List<String>  processResult(JsonArray iterations, List<String> input) throws Exception {
+    public List<String>  processResult(JsonArray iterations, String... input) throws Exception {
         List<String> output = new ArrayList<String>();
         for (JsonElement element : iterations) {
             JsonObject iteration = element.getAsJsonObject();
             String iterationName = iteration.get("Name").getAsString();
             String startDate = extract("StartDate", iteration);
             String endDate = subtractOneDay(extract("EndDate", iteration));
-            String givenDate = input.get(0);
+            String givenDate = input[0];
             if (inRange(givenDate, startDate, endDate)) {
                 output.add(iterationName);
                 output.add(startDate);

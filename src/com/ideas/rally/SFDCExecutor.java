@@ -15,9 +15,9 @@ public class SFDCExecutor {
     private final Fetch fetch;
     private final QueryFilter queryFilter;
     private final SFDCCallBack callBack;
-    private final List<String> input;
+    private final String[] input;
 
-    public SFDCExecutor(String queryRequest, Fetch fetch, QueryFilter queryFilter, SFDCCallBack callBack, List<String> input){
+    public SFDCExecutor(String queryRequest, Fetch fetch, QueryFilter queryFilter, SFDCCallBack callBack, String... input){
         this.queryRequest=queryRequest;
         this.fetch=fetch;
         this.queryFilter= queryFilter;

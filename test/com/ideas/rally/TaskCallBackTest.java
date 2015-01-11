@@ -17,7 +17,6 @@ import static org.junit.Assert.assertEquals;
 public class TaskCallBackTest {
     private static final JsonArray taskArray = getTaskArray();
     private static final String iterationName = "Iteration 1";
-    private static final List<String> iteration1 = asList(iterationName);
     private static final String id = "TA007";
     private static final String email = "email@email.com";
     private static final String actuals = "10.3";
@@ -39,14 +38,14 @@ public class TaskCallBackTest {
 
     @Test
     public void newTasksHaveChangedStatus() throws Exception {
-        callBack.processResult(taskArray, iteration1);
+        callBack.processResult(taskArray, iterationName);
         assertTaskChangedStatusIs("1");
     }
 
     @Test
     public void tasksUpdatedWithSameDataDoNotHaveChangedStatus() throws Exception {
         insetIntoTaskHistory(actuals, toDo, definedStatus);
-        callBack.processResult(taskArray, iteration1);
+        callBack.processResult(taskArray, iterationName);
         assertTaskChangedStatusIs("0");
     }
 
@@ -54,21 +53,21 @@ public class TaskCallBackTest {
     @Test
     public void whenActualsAreUpdatedOnTheTaskItHasChangedStatus() throws Exception {
         insetIntoTaskHistory("10.6", toDo, definedStatus);
-        callBack.processResult(taskArray, iteration1);
+        callBack.processResult(taskArray, iterationName);
         assertTaskChangedStatusIs("1");
     }
 
     @Test
     public void whenToDoIsUpdatedOnTheTaskItHasChangedStatus() throws Exception {
         insetIntoTaskHistory(actuals, "4.1", definedStatus);
-        callBack.processResult(taskArray, iteration1);
+        callBack.processResult(taskArray, iterationName);
         assertTaskChangedStatusIs("1");
     }
 
     @Test
     public void whenStateIsUpdatedOnTheTaskItHasChangedStatus() throws Exception {
         insetIntoTaskHistory(actuals, toDo, "In-Progress");
-        callBack.processResult(taskArray, iteration1);
+        callBack.processResult(taskArray, iterationName);
         assertTaskChangedStatusIs("1");
     }
 

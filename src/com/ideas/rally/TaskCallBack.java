@@ -15,7 +15,7 @@ import static com.ideas.rally.SQLExecutor.executeUpdate;
 
 public class TaskCallBack extends SFDCCallBack{
     @Override
-    public List<String> processResult(JsonArray jsonArray, List<String> input) throws Exception {
+    public List<String> processResult(JsonArray jsonArray, String... input) throws Exception {
         for (JsonElement jsonElement : jsonArray) {
             JsonObject json = jsonElement.getAsJsonObject();
             String emailAddress = new EmailCallBack().getUserEmailAddress(getReferenceName(json, "Owner"));
@@ -23,7 +23,7 @@ public class TaskCallBack extends SFDCCallBack{
             float actual = getFloatValue(json, "Actuals");
             float todo = getFloatValue(json, "ToDo");
             if (emailAddress != null) {
-                insertIntoTaskHistory(input.get(0), json.get("FormattedID").getAsString(), emailAddress, actual, todo, json.get("State").getAsString());
+                insertIntoTaskHistory(input[0], json.get("FormattedID").getAsString(), emailAddress, actual, todo, json.get("State").getAsString());
             }
         }
         return Collections.emptyList();

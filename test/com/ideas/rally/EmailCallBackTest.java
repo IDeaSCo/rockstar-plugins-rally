@@ -11,15 +11,12 @@ import java.sql.ResultSet;
 import java.util.List;
 
 import static com.ideas.rally.SQLExecutor.executeUpdate;
-import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 
 public class EmailCallBackTest {
     private final EmailCallBack callBack = new EmailCallBack();
     private final String userName = "testName";
     private final String email = "user.name@company.com";
-    private final List<String> userNames = asList(userName);
-
 
     @BeforeClass
     public static void beforeClass() throws Exception {
@@ -34,18 +31,18 @@ public class EmailCallBackTest {
 
     @Test
     public void insertNewUserIfItDoesNotExist() throws Exception {
-        List<String> emails = callBack.processResult(asJsonArray(email), userNames);
+        List<String> emails = callBack.processResult(asJsonArray(email), userName);
         assertEquals(email, emails.get(0));
         assertValuesInDBMatch(userName, email);
     }
 
     @Test
     public void updateEmailIfUserAlreadyPresent() throws Exception {
-        callBack.processResult(asJsonArray(email), userNames);
+        callBack.processResult(asJsonArray(email), userName);
         assertValuesInDBMatch(userName, email);
 
         String updatedEmailed = "user.name@change.com";
-        callBack.processResult(asJsonArray(updatedEmailed), userNames);
+        callBack.processResult(asJsonArray(updatedEmailed), userName);
         assertValuesInDBMatch(userName, updatedEmailed);
     }
 
