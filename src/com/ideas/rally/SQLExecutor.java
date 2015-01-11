@@ -6,7 +6,6 @@ import java.sql.Statement;
 
 public abstract class SQLExecutor {
     private final String query;
-
     public String result;
 
     public SQLExecutor(String query) {

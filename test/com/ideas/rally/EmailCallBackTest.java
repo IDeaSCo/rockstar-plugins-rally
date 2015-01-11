@@ -8,7 +8,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.ideas.rally.SQLExecutor.executeUpdate;
@@ -20,7 +19,6 @@ public class EmailCallBackTest {
     private final String userName = "testName";
     private final String email = "user.name@company.com";
     private final List<String> userNames = asList(userName);
-    private final List<String> emails = new ArrayList<String>();
 
 
     @BeforeClass
@@ -36,18 +34,18 @@ public class EmailCallBackTest {
 
     @Test
     public void insertNewUserIfItDoesNotExist() throws Exception {
-        callBack.processResult(asJsonArray(email), userNames, emails);
+        List<String> emails = callBack.processResult(asJsonArray(email), userNames);
         assertEquals(email, emails.get(0));
         assertValuesInDBMatch(userName, email);
     }
 
     @Test
     public void updateEmailIfUserAlreadyPresent() throws Exception {
-        callBack.processResult(asJsonArray(email), userNames, emails);
+        callBack.processResult(asJsonArray(email), userNames);
         assertValuesInDBMatch(userName, email);
 
         String updatedEmailed = "user.name@change.com";
-        callBack.processResult(asJsonArray(updatedEmailed), userNames, emails);
+        callBack.processResult(asJsonArray(updatedEmailed), userNames);
         assertValuesInDBMatch(userName, updatedEmailed);
     }
 

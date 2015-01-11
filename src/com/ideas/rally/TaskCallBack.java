@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +15,7 @@ import static com.ideas.rally.SQLExecutor.executeUpdate;
 
 public class TaskCallBack extends SFDCCallBack{
     @Override
-    public void processResult(JsonArray jsonArray, List<String> input, List<String> output) throws Exception {
+    public List<String> processResult(JsonArray jsonArray, List<String> input) throws Exception {
         for (JsonElement jsonElement : jsonArray) {
             JsonObject json = jsonElement.getAsJsonObject();
             String emailAddress = new EmailCallBack().getUserEmailAddress(getReferenceName(json, "Owner"));
@@ -25,6 +26,7 @@ public class TaskCallBack extends SFDCCallBack{
                 insertIntoTaskHistory(input.get(0), json.get("FormattedID").getAsString(), emailAddress, actual, todo, json.get("State").getAsString());
             }
         }
+        return Collections.emptyList();
     }
 
     private void insertIntoTaskHistory(String iteration, String taskNumber, String taskOwner, float actual, float todo, String state) throws Exception {

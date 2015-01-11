@@ -7,6 +7,7 @@ import com.rallydev.rest.response.QueryResponse;
 import com.rallydev.rest.util.Fetch;
 import com.rallydev.rest.util.QueryFilter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SFDCExecutor {
@@ -15,18 +16,17 @@ public class SFDCExecutor {
     private final QueryFilter queryFilter;
     private final SFDCCallBack callBack;
     private final List<String> input;
-    private final List<String> output;
 
-    public SFDCExecutor(String queryRequest,Fetch fetch,QueryFilter queryFilter, SFDCCallBack callBack, List<String> input, List<String> output){
+    public SFDCExecutor(String queryRequest, Fetch fetch, QueryFilter queryFilter, SFDCCallBack callBack, List<String> input){
         this.queryRequest=queryRequest;
         this.fetch=fetch;
         this.queryFilter= queryFilter;
         this.callBack=callBack;
         this.input=input;
-        this.output=output;
     }
 
-    public void execute() throws Exception {
+    public List<String> execute() throws Exception {
+        List<String> output = new ArrayList<String>();
         RallyRestApi restApi = RallyConfiguration.getRallyRestApi();
         QueryRequest workSpaceRequest = new QueryRequest(queryRequest);
         workSpaceRequest.setFetch(fetch);
@@ -40,8 +40,9 @@ public class SFDCExecutor {
             pageCount++;
             workSpaceResponse = restApi.query(workSpaceRequest);
             JsonArray array = workSpaceResponse.getResults();
-            callBack.processResult(array, input, output);
+            output.addAll(callBack.processResult(array, input));
 
         } while (workSpaceResponse.getTotalResultCount() > pageCount * 200);
+        return output;
     }
 }

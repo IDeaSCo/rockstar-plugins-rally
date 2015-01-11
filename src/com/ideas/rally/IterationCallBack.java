@@ -4,11 +4,13 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class IterationCallBack extends SFDCCallBack{
     @Override
-    public void processResult(JsonArray iterations, List<String> input, List<String> output) throws Exception {
+    public List<String>  processResult(JsonArray iterations, List<String> input) throws Exception {
+        List<String> output = new ArrayList<String>();
         for (JsonElement element : iterations) {
             JsonObject iteration = element.getAsJsonObject();
             String iterationName = iteration.get("Name").getAsString();
@@ -18,9 +20,10 @@ public class IterationCallBack extends SFDCCallBack{
             if (inRange(givenDate, startDate, endDate)) {
                 output.add(iterationName);
                 output.add(startDate);
-                return;
+                break;
             }
         }
+        return output;
     }
 
     static boolean inRange(String givenDate, String startDate, String endDate) {

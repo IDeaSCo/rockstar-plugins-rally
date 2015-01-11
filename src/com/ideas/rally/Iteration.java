@@ -31,9 +31,9 @@ public class Iteration {
         Fetch fetchList = new Fetch("Name","StartDate", "EndDate" );
         List<String> input = new ArrayList<String>();
         input.add(date);
-        List<String> output = new ArrayList<String>();
         QueryFilter queryFilter = new QueryFilter("Project", "=", RallyConfiguration.RALLY_PROJECT);
-        SFDCExecutor executor = new SFDCExecutor("Iteration",fetchList,queryFilter,new IterationCallBack(),input,output);
+        SFDCExecutor executor = new SFDCExecutor("Iteration",fetchList,queryFilter,new IterationCallBack(),input);
+        List<String> output = executor.execute();
         if(output.size() > 0) {
             populateWorkingDaysSinceStartOfIteration(output.get(1), input.get(0));
             return output.get(0);
@@ -58,10 +58,9 @@ public class Iteration {
         Fetch fetchList = new Fetch("Name","StartDate", "EndDate" );
         List<String> input = new ArrayList<String>();
         input.add(date);
-        List<String> output = new ArrayList<String>();
         QueryFilter queryFilter = new QueryFilter("Project", "=", RallyConfiguration.RALLY_PROJECT);
-        SFDCExecutor executor = new SFDCExecutor("Iteration",fetchList,queryFilter,new PreviousIterationCallBack(),input,output);
-
+        SFDCExecutor executor = new SFDCExecutor("Iteration",fetchList,queryFilter,new PreviousIterationCallBack(),input);
+        List<String> output = executor.execute();
         if(output.size() > 0) {
           return  output.get(0);
         }
@@ -74,9 +73,9 @@ public class Iteration {
         Fetch fetch = new Fetch("FormattedID", "Actuals", "Blocked", "State", "ToDo", "Owner" );
         List<String> input = new ArrayList<String>();
         input.add(iteration);
-        List<String> output = new ArrayList<String>();
         QueryFilter queryFilter = new QueryFilter("Iteration.Name", "=", iteration);
-        SFDCExecutor executor = new SFDCExecutor("Task",fetch,queryFilter,new TaskCallBack(),input,output);
+        SFDCExecutor executor = new SFDCExecutor("Task",fetch,queryFilter,new TaskCallBack(),input);
+        List<String> output = executor.execute();
     }
 
     private void getStories(String iteration, String storyDefect) throws Exception {
@@ -90,11 +89,10 @@ public class Iteration {
         Fetch fetch = new Fetch("FormattedID", "ScheduleState", "PlanEstimate", "Tasks", "Owner" );
         List<String> input = new ArrayList<String>();
         input.add(iteration);
-        List<String> output = new ArrayList<String>();
         QueryFilter queryFilter = new QueryFilter(filter, "=", filterValue);
         SFDCExecutor executor = new SFDCExecutor(storyDefect,fetch,queryFilter,new SFDCCallBack() {
             @Override
-            public void processResult(JsonArray jsonArray, List<String> input, List<String> output) throws Exception {
+            public List<String> processResult(JsonArray jsonArray, List<String> input) throws Exception {
                 for (JsonElement jsonElement : jsonArray) {
                     JsonObject json = jsonElement.getAsJsonObject();
                     String emailAddress = new EmailCallBack().getUserEmailAddress(getReferenceName(json, "Owner"));
@@ -107,8 +105,10 @@ public class Iteration {
                     }
                     System.out.println(emailAddress + ":" + json.getAsJsonObject("Tasks").get("_ref").getAsString());
                 }
+                return Collections.emptyList();
             }
-        },input,output);
+        },input);
+        List<String> output = executor.execute();
     }
 
     private void getStoryIteration(String storyDefect, String storyNumber, String expectedIteration) throws Exception {
@@ -116,11 +116,10 @@ public class Iteration {
         List<String> input = new ArrayList<String>();
         input.add(storyNumber);
         input.add(expectedIteration);
-        List<String> output = new ArrayList<String>();
         QueryFilter queryFilter = new QueryFilter("FormattedID", "=", storyNumber);
         SFDCExecutor executor = new SFDCExecutor("Iteration",fetch,queryFilter,new SFDCCallBack() {
             @Override
-            public void processResult(JsonArray jsonArray, List<String> input, List<String> output) throws Exception {
+            public List<String> processResult(JsonArray jsonArray, List<String> input) throws Exception {
                 for (JsonElement jsonElement : jsonArray) {
                     JsonObject json = jsonElement.getAsJsonObject();
                     System.out.println("storyNumber:'" + input.get(0) + getReferenceName(json, "Iteration") + "'");
@@ -129,9 +128,11 @@ public class Iteration {
                         updateStoryIterationNumber(input.get(0), getReferenceName(json, "Iteration"));
                     }
                 }
+                return Collections.emptyList();
             }
 
-        },input,output);
+        },input);
+        List<String> output = executor.execute();
     }
 
     private void updateStoryIterationNumber(String storyNumber, String iterationName) throws Exception {

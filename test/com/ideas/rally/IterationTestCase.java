@@ -5,11 +5,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import org.junit.BeforeClass;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class IterationTestCase {
-    protected final List<String> output = new ArrayList<String>();
     protected final JsonArray iterations= getIterationArray();
 
     @BeforeClass

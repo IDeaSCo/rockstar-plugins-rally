@@ -8,7 +8,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.ideas.rally.SQLExecutor.executeUpdate;
@@ -40,14 +39,14 @@ public class TaskCallBackTest {
 
     @Test
     public void newTasksHaveChangedStatus() throws Exception {
-        callBack.processResult(taskArray, iteration1, new ArrayList<String>());
+        callBack.processResult(taskArray, iteration1);
         assertTaskChangedStatusIs("1");
     }
 
     @Test
     public void tasksUpdatedWithSameDataDoNotHaveChangedStatus() throws Exception {
         insetIntoTaskHistory(actuals, toDo, definedStatus);
-        callBack.processResult(taskArray, iteration1, new ArrayList<String>());
+        callBack.processResult(taskArray, iteration1);
         assertTaskChangedStatusIs("0");
     }
 
@@ -55,21 +54,21 @@ public class TaskCallBackTest {
     @Test
     public void whenActualsAreUpdatedOnTheTaskItHasChangedStatus() throws Exception {
         insetIntoTaskHistory("10.6", toDo, definedStatus);
-        callBack.processResult(taskArray, iteration1, new ArrayList<String>());
+        callBack.processResult(taskArray, iteration1);
         assertTaskChangedStatusIs("1");
     }
 
     @Test
     public void whenToDoIsUpdatedOnTheTaskItHasChangedStatus() throws Exception {
         insetIntoTaskHistory(actuals, "4.1", definedStatus);
-        callBack.processResult(taskArray, iteration1, new ArrayList<String>());
+        callBack.processResult(taskArray, iteration1);
         assertTaskChangedStatusIs("1");
     }
 
     @Test
     public void whenStateIsUpdatedOnTheTaskItHasChangedStatus() throws Exception {
         insetIntoTaskHistory(actuals, toDo, "In-Progress");
-        callBack.processResult(taskArray, iteration1, new ArrayList<String>());
+        callBack.processResult(taskArray, iteration1);
         assertTaskChangedStatusIs("1");
     }
 

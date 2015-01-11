@@ -12,8 +12,9 @@ import static com.ideas.rally.IterationCallBack.inRange;
 
 public class PreviousIterationCallBack extends SFDCCallBack{
     @Override
-    public void processResult(JsonArray iterations, List<String> input, List<String> output) throws Exception {
+    public List<String> processResult(JsonArray iterations, List<String> input) throws Exception {
         List<String> allIterations = new ArrayList<String>();
+        List<String> results = new ArrayList<String>();
         for (JsonElement element : iterations) {
             JsonObject iteration = element.getAsJsonObject();
             String iterationName = iteration.get("Name").getAsString();
@@ -23,12 +24,13 @@ public class PreviousIterationCallBack extends SFDCCallBack{
 
             if (inRange(givenDate, startDate, endDate)) {
                 if(allIterations.size() > 0 ) {
-                    output.add(tail(allIterations));
+                    results.add(tail(allIterations));
+                    return results;
                 }
-                break;
             }
             allIterations.add(iterationName);
         }
+        return results;
     }
 
     private String tail(List<String> list) {
