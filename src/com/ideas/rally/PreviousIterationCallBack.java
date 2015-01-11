@@ -7,25 +7,32 @@ import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.ideas.rally.IterationCallBack.extract;
+import static com.ideas.rally.IterationCallBack.inRange;
+
 public class PreviousIterationCallBack extends SFDCCallBack{
     @Override
-    public void processResult(JsonArray jsonArray, List<String> input, List<String> output) throws Exception {
-        List<String> iterationList = new ArrayList<String>();
-        for (JsonElement jsonElement : jsonArray) {
-            JsonObject json = jsonElement.getAsJsonObject();
-            String iterationName = json.get("Name").getAsString();
-            String startDate = json.get("StartDate").getAsString().substring(0, 10);
-            String endDate = json.get("EndDate").getAsString().substring(0, 10);
-            System.out.println("iterationName:" + iterationName + " startDate:" + startDate + " endDate:" + endDate);
+    public void processResult(JsonArray iterations, List<String> input, List<String> output) throws Exception {
+        List<String> allIterations = new ArrayList<String>();
+        for (JsonElement element : iterations) {
+            JsonObject iteration = element.getAsJsonObject();
+            String iterationName = iteration.get("Name").getAsString();
+            String startDate = extract("StartDate", iteration);
+            String endDate = extract("EndDate", iteration);
+            String givenDate = input.get(0);
 
-            if (startDate.compareTo(input.get(0)) <= 0 && endDate.compareTo(input.get(0)) >= 0) {
-                if(iterationList.size() > 0 ) {
-                    output.add(iterationList.get(iterationList.size() - 1));
+            if (inRange(givenDate, startDate, endDate)) {
+                if(allIterations.size() > 0 ) {
+                    output.add(tail(allIterations));
                 }
                 break;
             }
-            iterationList.add(iterationName);
+            allIterations.add(iterationName);
         }
+    }
+
+    private String tail(List<String> list) {
+        return list.get(list.size() - 1);
     }
 
 }

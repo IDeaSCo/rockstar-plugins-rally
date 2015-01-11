@@ -1,33 +1,33 @@
 package com.ideas.rally;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.List;
 
 import static java.util.Arrays.asList;
+import static org.junit.Assert.assertEquals;
 
 public class PreviousIterationCallBackTest extends IterationTestCase {
     private final PreviousIterationCallBack callBack = new PreviousIterationCallBack();
 
     @Test
-    public void testIteration_iteration1() throws Exception {
+    public void retrievePreviousIterationName() throws Exception {
         List<String> input = asList("2014-01-12");
         callBack.processResult(iterations, input, output);
-        Assert.assertEquals("Iteration 1",output.get(0));
+        assertEquals(asList("Iteration 1"), output);
     }
 
     @Test
-    public void testIteration_iteration2() throws Exception {
+    public void retrievePreviousIterationNameEvenIfGivenDateIsLastDayOfIteration() throws Exception {
         List<String> input = asList("2014-01-28");
         callBack.processResult(iterations, input, output);
-        Assert.assertEquals("Iteration 2",output.get(0));
+        assertEquals(asList("Iteration 2"), output);
     }
 
     @Test
-    public void testIteration_iteration_null() throws Exception {
+    public void someDatesMightNotMatchAnyIteration() throws Exception {
         List<String> input = asList("2013-01-28");
         callBack.processResult(iterations, input, output);
-        Assert.assertEquals(0,output.size());
+        assertEquals(0, output.size());
     }
 }

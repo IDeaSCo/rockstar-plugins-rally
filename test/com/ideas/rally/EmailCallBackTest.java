@@ -16,40 +16,45 @@ import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 
 public class EmailCallBackTest {
+    private final EmailCallBack callBack = new EmailCallBack();
+    private final String userName = "testName";
+    private final String email = "user.name@company.com";
+    private final List<String> userNames = asList(userName);
+    private final List<String> emails = new ArrayList<String>();
+
+
     @BeforeClass
     public static void beforeClass() throws Exception {
-        RallyConfiguration.testRun=true;
+        RallyConfiguration.testRun = true;
         RallyConfiguration.createSchema();
     }
 
     @Before
-    public void before() throws Exception{
+    public void before() throws Exception {
         executeUpdate("delete from user");
     }
 
     @Test
-    public void processResult() throws Exception {
-        final String userName="testName";
-        final String email = "user.name@company.com";
-        String updatedEmailed = "user.name@change.com";
+    public void insertNewUserIfItDoesNotExist() throws Exception {
+        callBack.processResult(asJsonArray(email), userNames, emails);
+        assertEquals(email, emails.get(0));
+        assertValuesInDBMatch(userName, email);
+    }
 
-        EmailCallBack  callBack = new EmailCallBack();
-        List<String> input = asList(userName);
-        List<String> output = new ArrayList<String>();
-
-        callBack.processResult(asJsonArray(email), input, output);
+    @Test
+    public void updateEmailIfUserAlreadyPresent() throws Exception {
+        callBack.processResult(asJsonArray(email), userNames, emails);
         assertValuesInDBMatch(userName, email);
 
-        callBack.processResult(asJsonArray(updatedEmailed), input, output);
+        String updatedEmailed = "user.name@change.com";
+        callBack.processResult(asJsonArray(updatedEmailed), userNames, emails);
         assertValuesInDBMatch(userName, updatedEmailed);
     }
 
     @Test
-    public void getUserEmailAddress() throws Exception {
-        String email = "email@email.com";
-        executeUpdate("insert into user(userName,email) values('owner','" + email + "')");
-        EmailCallBack  callBack = new EmailCallBack();
-        assertEquals(email, callBack.getUserEmailAddress("owner"));
+    public void retrieveEmailUsingUserName() throws Exception {
+        executeUpdate("insert into user(userName,email) values('" + userName + "','" + email + "')");
+        assertEquals(email, callBack.getUserEmailAddress(userName));
     }
 
     private void assertValuesInDBMatch(final String userName, final String email) throws Exception {
@@ -63,16 +68,15 @@ public class EmailCallBackTest {
         }.go();
     }
 
-    private JsonArray asJsonArray(String email){
+    private JsonArray asJsonArray(String email) {
         JsonArray jsonArray = new JsonArray();
         jsonArray.add(getEmail(email));
         return jsonArray;
     }
 
-    private JsonElement getEmail(String email)
-    {
-        String jsonStr = "{ \"EmailAddress\":\""+email+"\" }";
+    private JsonElement getEmail(String email) {
+        String jsonStr = "{ \"EmailAddress\":\"" + email + "\" }";
         Gson gson = new Gson();
-        return gson.fromJson (jsonStr, JsonElement.class);
+        return gson.fromJson(jsonStr, JsonElement.class);
     }
 }

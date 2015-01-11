@@ -19,11 +19,11 @@ public class EmailCallBack extends SFDCCallBack{
             JsonObject json = jsonElement.getAsJsonObject();
             String email = json.get("EmailAddress").getAsString();
             output.add(email);
-            updateEmail(input.get(0), email);
+            updateOrInsertUserEmail(input.get(0), email);
         }
     }
 
-    private void updateEmail(String owner, String email) throws Exception {
+    private void updateOrInsertUserEmail(String owner, String email) throws Exception {
         if(executeUpdate("update user set email='"+email+"' where userName='"+owner+"'")[0] == 0) {
             executeUpdate("insert into user(userName,email) values('" + owner + "','" + email + "')");
         }
