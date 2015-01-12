@@ -3,6 +3,8 @@ Rally Integration for [Rock Star App](https://github.com/IDeaSCo/rockstar)
 
 Very naive standalone java program that publishes stars and badges to Rock Star Application.
 
+[![Build Status](https://travis-ci.org/IDeaSCo/rockstar-plugins-rally.svg?branch=master)](https://travis-ci.org/IDeaSCo/rockstar-plugins-rally)
+
 ###Requirements
 - MySQL 5.5
 - Java 7
