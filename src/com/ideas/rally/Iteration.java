@@ -2,12 +2,9 @@ package com.ideas.rally;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.rallydev.rest.RallyRestApi;
-import com.rallydev.rest.request.GetRequest;
 import com.rallydev.rest.request.QueryRequest;
-import com.rallydev.rest.response.GetResponse;
 import com.rallydev.rest.response.QueryResponse;
 import com.rallydev.rest.util.Fetch;
 import com.rallydev.rest.util.QueryFilter;
@@ -37,11 +34,11 @@ public class Iteration {
 
         if (iteration == null) return;
 
-        getTasks(iteration);
+        updateTaskDetails(iteration);
         cleanUpDeletedTasks(iteration);
 
-        getStories(iteration, "HierarchicalRequirement");
-        getStories(iteration, "Defect");
+        updateStoryDetails(iteration, "HierarchicalRequirement");
+        updateStoryDetails(iteration, "Defect");
         cleanUpDeletedStoriesDefects(iteration);
         updateStatusOfUnacceptedStoriesInPreviousIteration(previousIteration);
 
@@ -61,21 +58,17 @@ public class Iteration {
     }
 
     private String getIterationName(String date, IterationType iterationType) throws Exception {
-        List<String> output = fetchIterationDetails(date, iterationType);
+        Fetch fetchList = new Fetch("Name","StartDate", "EndDate" );
+        QueryFilter queryFilter = new QueryFilter("Project", "=", RallyConfiguration.RALLY_PROJECT);
+        CallBack callBack = new IterationCallBack(iterationType);
+        Executor executor = new Executor("Iteration",fetchList,queryFilter, callBack, date);
+        List<String> output = executor.execute();
         if(output.size() > 0) {
             if(iterationType.populateWorkingDays())
                 populateWorkingDaysSinceStartOfIteration(output.get(1), date);
             return output.get(0);
         }
         return null;
-    }
-
-    private List<String> fetchIterationDetails(String date, IterationType iterationType) throws Exception {
-        Fetch fetchList = new Fetch("Name","StartDate", "EndDate" );
-        QueryFilter queryFilter = new QueryFilter("Project", "=", RallyConfiguration.RALLY_PROJECT);
-        SFDCCallBack callBack = new IterationCallBack(iterationType);
-        SFDCExecutor executor = new SFDCExecutor("Iteration",fetchList,queryFilter, callBack,date);
-        return executor.execute();
     }
 
     protected void populateWorkingDaysSinceStartOfIteration(String startDate, String endDate) throws Exception {
@@ -91,69 +84,23 @@ public class Iteration {
         }
     }
 
-    private void getTasks(String iteration) throws Exception {
+    private void updateTaskDetails(String iteration) throws Exception {
         System.out.println("iteration:" + iteration);
 
         Fetch fetch = new Fetch("FormattedID", "Actuals", "Blocked", "State", "ToDo", "Owner" );
         QueryFilter queryFilter = new QueryFilter("Iteration.Name", "=", iteration);
-        SFDCExecutor executor = new SFDCExecutor("Task",fetch,queryFilter,new TaskCallBack(),iteration);
-        List<String> output = executor.execute();
+        Executor executor = new Executor("Task",fetch,queryFilter,new TaskCallBack(),iteration);
+        executor.execute();
     }
 
-    private void getStories(String iteration, String storyDefect) throws Exception {
-        getStoryDefect(storyDefect, "Iteration.Name", iteration, iteration);
-        updateStoryIteration(iteration);
-    }
-
-    private void getStoryDefect(String storyDefect, String filter, String filterValue, String iteration) throws Exception {
+    private void updateStoryDetails(String iteration, String storyType) throws Exception {
         System.out.println("iteration:" + iteration);
 
         Fetch fetch = new Fetch("FormattedID", "ScheduleState", "PlanEstimate", "Tasks", "Owner" );
-        QueryFilter queryFilter = new QueryFilter(filter, "=", filterValue);
-        SFDCExecutor executor = new SFDCExecutor(storyDefect,fetch,queryFilter,new SFDCCallBack() {
-            @Override
-            public List<String> processResult(JsonArray jsonArray, String... input) throws Exception {
-                for (JsonElement jsonElement : jsonArray) {
-                    JsonObject json = jsonElement.getAsJsonObject();
-                    String emailAddress = new EmailCallBack().getUserEmailAddress(getReferenceName(json, "Owner"));
-
-                    float planEstimate = getFloatValue(json, "PlanEstimate");
-                    if (emailAddress != null) {
-                        insertIntoStoryHistory(input[0], json.get("FormattedID").getAsString(), emailAddress, planEstimate, json.get("ScheduleState").getAsString());
-                        deleteStoryTaskOwners(json.get("FormattedID").getAsString());
-                        insertStoryTaskOwners(json.get("FormattedID").getAsString(), json.getAsJsonObject("Tasks").get("_ref").getAsString());
-                    }
-                    System.out.println(emailAddress + ":" + json.getAsJsonObject("Tasks").get("_ref").getAsString());
-                }
-                return Collections.emptyList();
-            }
-        },iteration);
-        List<String> output = executor.execute();
-    }
-
-    private void getStoryIteration(String storyDefect, String storyNumber, String expectedIteration) throws Exception {
-        Fetch fetch = new Fetch("FormattedID", "Actuals", "Blocked", "State", "ToDo", "Owner" );
-        QueryFilter queryFilter = new QueryFilter("FormattedID", "=", storyNumber);
-        SFDCExecutor executor = new SFDCExecutor("Iteration",fetch,queryFilter,new SFDCCallBack() {
-            @Override
-            public List<String> processResult(JsonArray jsonArray, String... input) throws Exception {
-                for (JsonElement jsonElement : jsonArray) {
-                    JsonObject json = jsonElement.getAsJsonObject();
-                    System.out.println("storyNumber:'" + input[0] + getReferenceName(json, "Iteration") + "'");
-                    if (getReferenceName(json, "Iteration") == null || !getReferenceName(json, "Iteration").equals(input[1])) {
-                        System.out.println("updating iteration name..");
-                        updateStoryIterationNumber(input[0], getReferenceName(json, "Iteration"));
-                    }
-                }
-                return Collections.emptyList();
-            }
-
-        },storyNumber, expectedIteration);
-        List<String> output = executor.execute();
-    }
-
-    private void updateStoryIterationNumber(String storyNumber, String iterationName) throws Exception {
-        executeUpdate("insert into storyhistory(storyNumber,iteration) values ('" + storyNumber + "','" + iterationName + "') on duplicate key update iterationChanged=if(VALUES(iteration) = 'null',0,if(VALUES(iteration) <> iteration,1,0)), iteration=VALUES(iteration)");
+        QueryFilter queryFilter = new QueryFilter("Iteration.Name", "=", iteration);
+        Executor executor = new Executor(storyType,fetch,queryFilter, new EstimateCallBack(), iteration);
+        executor.execute();
+        updateStoryIteration(iteration);
     }
 
     private void updateStoryIteration(final String iteration) throws Exception {
@@ -161,51 +108,13 @@ public class Iteration {
             @Override
             public void accept(ResultSet rs) throws Exception {
                 String storyNumber = rs.getString(1);
-                String storyType = storyNumber.startsWith("US") ? "HierarchicalRequirement" : "Defect";
-                getStoryIteration(storyType, storyNumber, iteration);
+                Fetch fetch = new Fetch("FormattedID", "Actuals", "Blocked", "State", "ToDo", "Owner" );
+                QueryFilter queryFilter = new QueryFilter("FormattedID", "=", storyNumber);
+                Executor executor = new Executor("Iteration",fetch,queryFilter, new StoryIterationCallBack(), storyNumber, iteration);
+                executor.execute();
             }
+
         }.go();
-    }
-
-    private void deleteStoryTaskOwners(String storyNumber) throws Exception {
-        executeUpdate("delete from storyUsers where storyNumber='" + storyNumber + "'");
-    }
-
-    private void insertStoryTaskOwners(String storyNumber, String taskURL) throws Exception {
-        RallyRestApi restApi = RallyConfiguration.getRallyRestApi();
-        GetRequest request = new GetRequest(taskURL);
-        GetResponse response = restApi.get(request);
-        JsonObject json = response.getObject();
-        JsonArray jsonArray = json.getAsJsonArray("Results");
-        for (int i = 0; i < jsonArray.size(); i++) {
-            JsonElement element = jsonArray.get(i);
-            JsonObject childObject = element.getAsJsonObject();
-            if (!(childObject.get("Owner") instanceof JsonNull)) {
-                String email = new EmailCallBack().getUserEmailAddress(childObject.getAsJsonObject("Owner").get("_refObjectName").getAsString());
-                if (email != null) {
-                    insertIntoStoryUsers(storyNumber, email);
-                }
-            }
-        }
-    }
-
-    private void insertIntoStoryHistory(String iteration, String storyNumber, String emailAddress, float planEstimate, String state) throws Exception {
-        StringBuilder buffer = new StringBuilder()
-                .append(" insert into storyHistory(iteration,storyNumber,storyOwner,planEstimate,state,planEstimateChanged,stateChanged,iterationChanged) ")
-                .append(" values ('" + iteration + "','" + storyNumber + "','" + emailAddress + "'," + planEstimate + ",'" + state + "',if(" + planEstimate + " <> 0,1,0),if('" + state + "' = 'Completed',1,if('" + state + "' = 'Accepted',2,0)),0) ")
-                .append(" on duplicate key update ")
-                .append(" iterationChanged=if(iteration = 'null',0,if(VALUES(iteration) <> iteration,1,0)), ")
-                .append(" planEstimateChanged=if(VALUES(planEstimate) > 0,if(planEstimate=0,1,0),0), ")
-                .append(" stateChanged=if(state<>VALUES(state),if(VALUES(state) = 'Accepted', if(state<>'Completed',2,1),1),0), ")
-                .append(" iteration=VALUES(iteration), ")
-                .append(" storyOwner=VALUES(storyOwner), ")
-                .append(" planEstimate=VALUES(planEstimate), ")
-                .append(" state=VALUES(state) ");
-        executeUpdate(buffer.toString());
-    }
-
-    private void insertIntoStoryUsers(String storyNumber, String emailAddress) throws Exception {
-        executeUpdate("insert into storyUsers(storyNumber,storyTaskOwner) " + " values ('" + storyNumber + "','" + emailAddress + "') " + " on duplicate key update " + " storyTaskOwner=VALUES(storyTaskOwner) ");
     }
 
     private void updateStatusOfUnacceptedStoriesInPreviousIteration(final String previousIteration) throws Exception {
@@ -214,7 +123,13 @@ public class Iteration {
             public void accept(ResultSet rs) throws Exception {
                 String storyNumber = rs.getString(1);
                 String storyType = storyNumber.startsWith("US") ? "HierarchicalRequirement" : "Defect";
-                getStoryDefect(storyType, "FormattedID", storyNumber, previousIteration);
+                System.out.println("iteration:" + previousIteration);
+
+                Fetch fetch = new Fetch("FormattedID", "ScheduleState", "PlanEstimate", "Tasks", "Owner" );
+                QueryFilter queryFilter = new QueryFilter("FormattedID", "=", storyNumber);
+                Executor executor = new Executor(storyType,fetch,queryFilter, new EstimateCallBack(), previousIteration);
+                executor.execute();
+                updateStoryIteration(previousIteration);
             }
         }.go();
     }
@@ -308,8 +223,8 @@ public class Iteration {
 
     private void deleteStoryNumber(String storyNumber) throws Exception {
         executeUpdate(
-                "delete from storyhistory where storyNumber='" + storyNumber + "'",
-                "delete from storyusers where storyNumber='" + storyNumber + "'"
+            "delete from storyhistory where storyNumber='" + storyNumber + "'",
+            "delete from storyusers where storyNumber='" + storyNumber + "'"
         );
     }
 

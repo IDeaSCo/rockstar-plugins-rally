@@ -7,7 +7,7 @@ import com.google.gson.JsonObject;
 import java.util.Collections;
 import java.util.List;
 
-public class IterationCallBack extends SFDCCallBack{
+public class IterationCallBack extends CallBack {
     private final IterationType iterationType;
 
     public IterationCallBack(IterationType iterationType) {

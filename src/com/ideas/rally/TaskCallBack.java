@@ -13,7 +13,7 @@ import java.util.Map;
 
 import static com.ideas.rally.SQLExecutor.executeUpdate;
 
-public class TaskCallBack extends SFDCCallBack{
+public class TaskCallBack extends CallBack {
     @Override
     public List<String> processResult(JsonArray jsonArray, String... input) throws Exception {
         for (JsonElement jsonElement : jsonArray) {

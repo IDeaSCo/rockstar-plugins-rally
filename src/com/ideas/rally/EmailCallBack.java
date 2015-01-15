@@ -12,7 +12,7 @@ import java.util.List;
 
 import static com.ideas.rally.SQLExecutor.executeUpdate;
 
-public class EmailCallBack extends SFDCCallBack{
+public class EmailCallBack extends CallBack {
     @Override
     public List<String>  processResult(JsonArray jsonArray, String... input) throws Exception {
         List<String> output = new ArrayList<String>();
@@ -36,7 +36,7 @@ public class EmailCallBack extends SFDCCallBack{
         if(email == null) {
             Fetch fetch = new Fetch("EmailAddress");
             QueryFilter queryFilter = new QueryFilter("DisplayName", "=", owner);
-            SFDCExecutor executor = new SFDCExecutor("User", fetch, queryFilter, new EmailCallBack() , owner);
+            Executor executor = new Executor("User", fetch, queryFilter, new EmailCallBack() , owner);
             return executor.execute().get(0);
         }
         return email;

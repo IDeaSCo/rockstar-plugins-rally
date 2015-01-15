@@ -7,7 +7,7 @@ import com.google.gson.JsonObject;
 import java.util.Calendar;
 import java.util.List;
 
-public abstract class SFDCCallBack {
+public abstract class CallBack {
     public abstract List<String> processResult(final JsonArray jsonArray, final String... input) throws Exception;
 
     protected String getReferenceName(JsonObject json, String name) {

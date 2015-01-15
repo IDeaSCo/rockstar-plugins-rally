@@ -14,8 +14,8 @@ import static org.junit.Assert.assertTrue;
 
 public class IterationCallBackTest {
     private static final JsonArray iterations = getIterationArray();
-    private final SFDCCallBack currentIterationCallBack = new IterationCallBack(new CurrentIteration());
-    private final SFDCCallBack lastIterationCallBack = new IterationCallBack(new LastIteration());
+    private final CallBack currentIterationCallBack = new IterationCallBack(new CurrentIteration());
+    private final CallBack lastIterationCallBack = new IterationCallBack(new LastIteration());
 
     @BeforeClass
     public static void beforeClass() {

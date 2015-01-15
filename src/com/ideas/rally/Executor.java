@@ -10,14 +10,14 @@ import com.rallydev.rest.util.QueryFilter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SFDCExecutor {
+public class Executor {
     private final String queryRequest;
     private final Fetch fetch;
     private final QueryFilter queryFilter;
-    private final SFDCCallBack callBack;
+    private final CallBack callBack;
     private final String[] input;
 
-    public SFDCExecutor(String queryRequest, Fetch fetch, QueryFilter queryFilter, SFDCCallBack callBack, String... input){
+    public Executor(String queryRequest, Fetch fetch, QueryFilter queryFilter, CallBack callBack, String... input){
         this.queryRequest=queryRequest;
         this.fetch=fetch;
         this.queryFilter= queryFilter;
